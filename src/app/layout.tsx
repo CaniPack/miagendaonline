@@ -3,6 +3,17 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 
+// Wrapper condicional para desarrollo
+function ConditionalClerkProvider({ children }: { children: React.ReactNode }) {
+  const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
+  
+  if (isDevelopment) {
+    return <>{children}</>;
+  }
+  
+  return <ClerkProvider>{children}</ClerkProvider>;
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -24,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ConditionalClerkProvider>
       <html lang="es">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -32,6 +43,6 @@ export default function RootLayout({
           {children}
         </body>
       </html>
-    </ClerkProvider>
+    </ConditionalClerkProvider>
   );
 }

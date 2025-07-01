@@ -1,9 +1,25 @@
 import { CalendarIcon, UserIcon, PlusIcon, CreditCardIcon, BellIcon, UsersIcon, LogOutIcon } from "lucide-react";
 import { UserButton } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
+import NotificationBell from '@/components/NotificationBell';
+
+// Usuario simulado para desarrollo
+const mockUser = {
+  firstName: 'Juan',
+  lastName: 'Pérez',
+  emailAddresses: [{ emailAddress: 'juan.perez@ejemplo.com' }],
+  id: 'user_dev_12345'
+};
 
 export default async function Home() {
-  const user = await currentUser();
+  const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
+  
+  let user;
+  if (isDevelopment) {
+    user = mockUser;
+  } else {
+    user = await currentUser();
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -16,11 +32,11 @@ export default async function Home() {
               <h1 className="text-3xl font-bold text-gray-900">Mi Agenda Online</h1>
             </div>
             <nav className="flex items-center space-x-6">
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
+              <a href="/appointments" className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
                 <PlusIcon className="h-4 w-4" />
                 <span>Nueva Cita</span>
-              </button>
-              <BellIcon className="h-6 w-6 text-gray-600" />
+              </a>
+              <NotificationBell />
               
               {/* User Info and Logout */}
               <div className="flex items-center space-x-3">
@@ -32,7 +48,13 @@ export default async function Home() {
                     {user?.emailAddresses[0]?.emailAddress}
                   </p>
                 </div>
-                <UserButton afterSignOutUrl="/sign-in" />
+                {isDevelopment ? (
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">JP</span>
+                  </div>
+                ) : (
+                  <UserButton afterSignOutUrl="/sign-in" />
+                )}
               </div>
             </nav>
           </div>
@@ -113,7 +135,12 @@ export default async function Home() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Próximas Citas</h2>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-semibold text-gray-900">Próximas Citas</h2>
+                  <a href="/appointments" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                    Ver todas
+                  </a>
+                </div>
                 <div className="flex space-x-2">
                   <button className="px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
                     Hoy
@@ -191,7 +218,13 @@ export default async function Home() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Mi Perfil</h2>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <UserButton />
+                  {isDevelopment ? (
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">JP</span>
+                    </div>
+                  ) : (
+                    <UserButton />
+                  )}
                   <div>
                     <p className="font-medium text-gray-900">
                       {user?.firstName} {user?.lastName}
@@ -230,7 +263,12 @@ export default async function Home() {
 
             {/* Recent Customers */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Clientes Recientes</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Clientes Recientes</h2>
+                <a href="/customers" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                  Ver todos
+                </a>
+              </div>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">

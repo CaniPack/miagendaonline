@@ -42,7 +42,7 @@ model Appointment {
 model Customer {
   id             String        @id @default(cuid())
   name           String
-  email          String?
+  email          String?       @unique
   phone          String?
   appointments   Appointment[]
   createdAt      DateTime      @default(now())
@@ -51,7 +51,7 @@ model Customer {
 
 model Plan {
   id             String   @id @default(cuid())
-  name           String
+  name           String   @unique
   price          Int      // en CLP o USD según implementación
   whatsappQuota  Int      // confirmaciones de WhatsApp
   emailQuota     Int      // correos mensuales de marketing
