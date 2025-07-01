@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -55,7 +55,7 @@ model Plan {
   price          Int      // en CLP o USD según implementación
   whatsappQuota  Int      // confirmaciones de WhatsApp
   emailQuota     Int      // correos mensuales de marketing
-  features       String[] // lista de características
+  features       String   // características como JSON string para SQLite
   users          User[]   // suscriptores de este plan
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

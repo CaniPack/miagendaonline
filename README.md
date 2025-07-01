@@ -1,6 +1,6 @@
 # 📅 Mi Agenda Online - Sistema de Citas Profesional
 
-Un sistema completo de gestión de citas desarrollado con **Next.js 15**, **TypeScript**, **Prisma**, **PostgreSQL** y **Tailwind CSS**.
+Un sistema completo de gestión de citas desarrollado con **Next.js 15**, **TypeScript**, **Prisma**, **SQLite** y **Tailwind CSS**.
 
 ## 🚀 Características
 
@@ -34,7 +34,7 @@ Un sistema completo de gestión de citas desarrollado con **Next.js 15**, **Type
 
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **Base de Datos**: PostgreSQL con Prisma ORM
+- **Base de Datos**: SQLite con Prisma ORM
 - **Autenticación**: Clerk
 - **UI**: Lucide React Icons
 - **Estilo**: Tailwind CSS v4
@@ -89,7 +89,7 @@ model Plan {
   price          Int      // en CLP o USD
   whatsappQuota  Int      // confirmaciones WhatsApp
   emailQuota     Int      // correos mensuales
-  features       String[] // características
+  features       String   // características (JSON string)
   users          User[]
 }
 ```
@@ -113,14 +113,14 @@ npm install
 cp .env.example .env
 
 # Editar las variables necesarias
-DATABASE_URL="postgresql://usuario:password@localhost:5432/miagenda_db"
+DATABASE_URL="file:./dev.db"
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="tu_clerk_key"
 CLERK_SECRET_KEY="tu_clerk_secret"
 ```
 
-4. **Configurar la base de datos**
+4. **Configurar la base de datos SQLite**
 ```bash
-# Ejecutar migraciones
+# Ejecutar migraciones (crea automáticamente dev.db)
 npx prisma migrate dev --name init
 
 # Generar cliente
