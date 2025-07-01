@@ -21,6 +21,7 @@ model User {
   notifications  Notification[]
   plan           Plan?         @relation(fields: [planId], references: [id])
   planId         String?
+  landingPage    LandingPage?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -105,4 +106,45 @@ enum NotificationType {
   EMAIL
   WHATSAPP
   SYSTEM
+}
+
+model LandingPage {
+  id                    String   @id @default(cuid())
+  user                  User     @relation(fields: [userId], references: [id])
+  userId                String   @unique
+  
+  // Información del profesional
+  professionalName      String
+  title                 String   // "Nutricionista", "Coach", etc.
+  tagline               String   // Frase de valor
+  description           String   // Descripción de servicios
+  profileImage          String?  // URL de la imagen
+  coverImage            String?  // URL de imagen de portada
+  logo                  String?  // URL del logo
+  
+  // Configuración del botón de agendar
+  buttonText            String   @default("Agendar Hora")
+  requirePayment        Boolean  @default(false)
+  
+  // Campos del formulario (JSON string)
+  formFields            String   @default("[{\"name\":\"name\",\"label\":\"Nombre\",\"type\":\"text\",\"required\":true},{\"name\":\"lastName\",\"label\":\"Apellido\",\"type\":\"text\",\"required\":true},{\"name\":\"email\",\"label\":\"Correo\",\"type\":\"email\",\"required\":true},{\"name\":\"comment\",\"label\":\"Comentario\",\"type\":\"textarea\",\"required\":false}]")
+  
+  // Datos de contacto
+  whatsapp              String?
+  instagram             String?
+  contactEmail          String?
+  
+  // Branding
+  colorScheme           String   @default("blue") // blue, green, purple, orange
+  
+  // SEO y URL
+  slug                  String   @unique
+  metaTitle             String?
+  metaDescription       String?
+  
+  // Estado
+  isPublished           Boolean  @default(false)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 } 
