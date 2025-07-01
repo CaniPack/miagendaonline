@@ -1,4 +1,4 @@
-import { CalendarIcon, UserIcon, PlusIcon } from "lucide-react";
+import { CalendarIcon, UserIcon, PlusIcon, CreditCardIcon, BellIcon, UsersIcon } from "lucide-react";
 
 export default function Home() {
   return (
@@ -9,13 +9,14 @@ export default function Home() {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
               <CalendarIcon className="h-8 w-8 text-indigo-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Agenda Pro</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Mi Agenda Online</h1>
             </div>
             <nav className="flex items-center space-x-6">
               <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2">
                 <PlusIcon className="h-4 w-4" />
-                <span>Nuevo Evento</span>
+                <span>Nueva Cita</span>
               </button>
+              <BellIcon className="h-6 w-6 text-gray-600" />
               <UserIcon className="h-6 w-6 text-gray-600" />
             </nav>
           </div>
@@ -24,56 +25,60 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Categorías</h2>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">Trabajo</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-700">Personal</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-700">Urgente</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Resumen</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Eventos Hoy</span>
-                  <span className="font-semibold text-indigo-600">3</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Esta Semana</span>
-                  <span className="font-semibold text-indigo-600">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Contactos</span>
-                  <span className="font-semibold text-indigo-600">25</span>
-                </div>
+        
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center">
+              <CalendarIcon className="h-8 w-8 text-blue-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Citas Hoy</p>
+                <p className="text-2xl font-bold text-gray-900">8</p>
               </div>
             </div>
           </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center">
+              <UsersIcon className="h-8 w-8 text-green-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Clientes</p>
+                <p className="text-2xl font-bold text-gray-900">156</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center">
+              <CreditCardIcon className="h-8 w-8 text-purple-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Ingresos Mes</p>
+                <p className="text-2xl font-bold text-gray-900">$2.4K</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center">
+              <BellIcon className="h-8 w-8 text-orange-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                <p className="text-2xl font-bold text-gray-900">3</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Calendar/Events Area */}
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Appointments Section */}
+          <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Próximos Eventos</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">Próximas Citas</h2>
                 <div className="flex space-x-2">
                   <button className="px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
-                    Día
+                    Hoy
                   </button>
                   <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                     Semana
@@ -84,57 +89,136 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Events List */}
+              {/* Appointments List */}
               <div className="space-y-4">
-                {/* Event 1 */}
+                {/* Appointment 1 */}
                 <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-3 h-12 bg-blue-500 rounded-full"></div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Reunión con Cliente</h3>
-                        <p className="text-gray-600 text-sm">10:00 AM - 11:30 AM</p>
-                        <p className="text-gray-500 text-sm">Oficina Principal</p>
+                        <h3 className="font-semibold text-gray-900">Consulta - María García</h3>
+                        <p className="text-gray-600 text-sm">10:00 AM - 11:00 AM (60 min)</p>
+                        <p className="text-gray-500 text-sm">📞 +56 9 1234 5678</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                      Trabajo
+                      Confirmada
                     </span>
                   </div>
                 </div>
 
-                {/* Event 2 */}
+                {/* Appointment 2 */}
+                <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-3 h-12 bg-yellow-500 rounded-full"></div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Revisión - Carlos López</h3>
+                        <p className="text-gray-600 text-sm">2:30 PM - 3:30 PM (60 min)</p>
+                        <p className="text-gray-500 text-sm">📧 carlos@email.com</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                      Pendiente
+                    </span>
+                  </div>
+                </div>
+
+                {/* Appointment 3 */}
                 <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-3 h-12 bg-green-500 rounded-full"></div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Almuerzo con Familia</h3>
-                        <p className="text-gray-600 text-sm">1:00 PM - 2:30 PM</p>
-                        <p className="text-gray-500 text-sm">Restaurante Central</p>
+                        <h3 className="font-semibold text-gray-900">Seguimiento - Ana Ruiz</h3>
+                        <p className="text-gray-600 text-sm">4:00 PM - 4:30 PM (30 min)</p>
+                        <p className="text-gray-500 text-sm">📱 WhatsApp confirmado</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                      Personal
+                      Confirmada
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                {/* Event 3 */}
-                <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-12 bg-red-500 rounded-full"></div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Presentación Final</h3>
-                        <p className="text-gray-600 text-sm">4:00 PM - 5:00 PM</p>
-                        <p className="text-gray-500 text-sm">Sala de Conferencias</p>
-                      </div>
-                    </div>
-                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                      Urgente
-                    </span>
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            
+            {/* Plan Info */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Mi Plan</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Plan Actual</span>
+                  <span className="font-semibold text-indigo-600">Pro</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">WhatsApp</span>
+                  <span className="font-semibold text-green-600">450/500</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Emails</span>
+                  <span className="font-semibold text-blue-600">1,200/2,000</span>
+                </div>
+                <button className="w-full mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                  Actualizar Plan
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Customers */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Clientes Recientes</h2>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium text-sm">MG</span>
                   </div>
+                  <div>
+                    <p className="font-medium text-gray-900">María García</p>
+                    <p className="text-gray-500 text-sm">Última cita: Hoy</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-medium text-sm">CL</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Carlos López</p>
+                    <p className="text-gray-500 text-sm">Última cita: Ayer</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-purple-600 font-medium text-sm">AR</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Ana Ruiz</p>
+                    <p className="text-gray-500 text-sm">Última cita: 2 días</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notifications */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Notificaciones</h2>
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900">Recordatorio</p>
+                  <p className="text-xs text-blue-700">Cita con María en 30 min</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm font-medium text-green-900">WhatsApp</p>
+                  <p className="text-xs text-green-700">Carlos confirmó su cita</p>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-lg">
+                  <p className="text-sm font-medium text-orange-900">Pago</p>
+                  <p className="text-xs text-orange-700">Renovación en 5 días</p>
                 </div>
               </div>
             </div>
@@ -152,13 +236,14 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <h3 className="text-green-800 font-medium">¡Configuración Completa!</h3>
+              <h3 className="text-green-800 font-medium">¡Sistema Actualizado!</h3>
               <p className="text-green-700 text-sm mt-1">
                 ✅ Next.js + TypeScript configurado<br/>
                 ✅ TailwindCSS funcionando correctamente<br/>
-                ✅ Prisma + SQLite configurado<br/>
-                ✅ Base de datos creada con migraciones<br/>
-                ✅ Todo funcionando desde MiAgendaOnline/
+                ✅ Prisma + PostgreSQL configurado<br/>
+                ✅ Modelos de appointments, clientes y planes<br/>
+                ✅ Sistema de roles y notificaciones<br/>
+                ✅ Integración con Clerk para autenticación
               </p>
             </div>
           </div>

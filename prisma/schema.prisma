@@ -1,124 +1,108 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// schema.prisma
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Modelo de Usuario
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relaciones
-  events    Event[]
-  contacts  Contact[]
-  categories Category[]
+  id             String        @id @default(cuid())
+  email          String        @unique
+  name           String?
+  phone          String?
+  role           Role          @default(CLIENT)
+  clerkId        String?       @unique
+  appointments   Appointment[]
+  payments       Payment[]
+  notifications  Notification[]
+  plan           Plan?         @relation(fields: [planId], references: [id])
+  planId         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
-// Modelo de Categoría
-model Category {
-  id          String   @id @default(cuid())
-  name        String
-  color       String   @default("#3B82F6")
-  description String?
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relaciones
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events Event[]
-
-  @@unique([name, userId])
+model Appointment {
+  id             String            @id @default(cuid())
+  user           User              @relation(fields: [userId], references: [id])
+  userId         String
+  customer       Customer          @relation(fields: [customerId], references: [id])
+  customerId     String
+  date           DateTime
+  duration       Int               // en minutos
+  status         AppointmentStatus @default(PENDING)
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
 
-// Modelo de Evento/Cita
-model Event {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  startTime   DateTime
-  endTime     DateTime
-  location    String?
-  isAllDay    Boolean   @default(false)
-  status      EventStatus @default(PENDING)
-  priority    Priority  @default(MEDIUM)
-  userId      String
-  categoryId  String?
-  contactId   String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  
-  // Recordatorios
-  reminders Reminder[]
+model Customer {
+  id             String        @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  appointments   Appointment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
-// Modelo de Contacto
-model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  company   String?
-  position  String?
-  notes     String?
-  avatar    String?
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relaciones
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events Event[]
+model Plan {
+  id             String   @id @default(cuid())
+  name           String
+  price          Int      // en CLP o USD según implementación
+  whatsappQuota  Int      // confirmaciones de WhatsApp
+  emailQuota     Int      // correos mensuales de marketing
+  features       String[] // lista de características
+  users          User[]   // suscriptores de este plan
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-// Modelo de Recordatorio
-model Reminder {
-  id        String   @id @default(cuid())
-  minutes   Int      // Minutos antes del evento
-  method    ReminderMethod @default(NOTIFICATION)
-  eventId   String
-  createdAt DateTime @default(now())
-
-  // Relaciones
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+model Payment {
+  id             String        @id @default(cuid())
+  user           User          @relation(fields: [userId], references: [id])
+  userId         String
+  amount         Int
+  status         PaymentStatus @default(PENDING)
+  paymentDate    DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
-// Enumeraciones
-enum EventStatus {
+model Notification {
+  id             String           @id @default(cuid())
+  user           User             @relation(fields: [userId], references: [id])
+  userId         String
+  type           NotificationType
+  message        String
+  read           Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  CLIENT
+}
+
+enum AppointmentStatus {
   PENDING
   CONFIRMED
   CANCELLED
   COMPLETED
 }
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }
 
-enum ReminderMethod {
-  NOTIFICATION
+enum NotificationType {
   EMAIL
-  SMS
-}
+  WHATSAPP
+  SYSTEM
+} 
