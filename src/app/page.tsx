@@ -1,6 +1,10 @@
-import { CalendarIcon, UserIcon, PlusIcon, CreditCardIcon, BellIcon, UsersIcon } from "lucide-react";
+import { CalendarIcon, UserIcon, PlusIcon, CreditCardIcon, BellIcon, UsersIcon, LogOutIcon } from "lucide-react";
+import { UserButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -17,11 +21,45 @@ export default function Home() {
                 <span>Nueva Cita</span>
               </button>
               <BellIcon className="h-6 w-6 text-gray-600" />
-              <UserIcon className="h-6 w-6 text-gray-600" />
+              
+              {/* User Info and Logout */}
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user?.emailAddresses[0]?.emailAddress}
+                  </p>
+                </div>
+                <UserButton afterSignOutUrl="/sign-in" />
+              </div>
             </nav>
           </div>
         </div>
       </header>
+
+      {/* Welcome Message */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-8">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                <UserIcon className="w-4 h-4 text-white" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-indigo-800 font-medium">
+                ¡Bienvenido, {user?.firstName || 'Usuario'}!
+              </h3>
+              <p className="text-indigo-700 text-sm mt-1">
+                ✅ Autenticación con Clerk configurada correctamente<br/>
+                🔒 Sesión activa y rutas protegidas
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -148,6 +186,26 @@ export default function Home() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             
+            {/* User Profile */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Mi Perfil</h2>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <UserButton />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500">{user?.emailAddresses[0]?.emailAddress}</p>
+                  </div>
+                </div>
+                <div className="pt-3 border-t">
+                  <p className="text-sm text-gray-600">Clerk ID: {user?.id?.slice(0, 8)}...</p>
+                  <p className="text-sm text-gray-600">Última conexión: Ahora</p>
+                </div>
+              </div>
+            </div>
+            
             {/* Plan Info */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Mi Plan</h2>
@@ -236,14 +294,15 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <h3 className="text-green-800 font-medium">¡Sistema Actualizado!</h3>
+              <h3 className="text-green-800 font-medium">¡Autenticación Completa!</h3>
               <p className="text-green-700 text-sm mt-1">
                 ✅ Next.js + TypeScript configurado<br/>
                 ✅ TailwindCSS funcionando correctamente<br/>
-                ✅ Prisma + PostgreSQL configurado<br/>
+                ✅ Prisma + SQLite configurado<br/>
                 ✅ Modelos de appointments, clientes y planes<br/>
                 ✅ Sistema de roles y notificaciones<br/>
-                ✅ Integración con Clerk para autenticación
+                ✅ <strong>Clerk autenticación funcionando!</strong><br/>
+                ✅ Rutas protegidas y middleware configurado
               </p>
             </div>
           </div>
