@@ -158,7 +158,7 @@ export default function Home() {
                 ✅ TailwindCSS funcionando correctamente<br/>
                 ✅ Prisma + SQLite configurado<br/>
                 ✅ Base de datos creada con migraciones<br/>
-                ✅ Prisma Studio corriendo en segundo plano
+                ✅ Todo funcionando desde MiAgendaOnline/
               </p>
             </div>
           </div>
