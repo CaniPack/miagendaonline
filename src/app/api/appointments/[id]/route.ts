@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const body = await request.json();
-    const { customerId, date, duration, notes, status } = body;
+    const { customerId, date, duration, notes, status, internalComment, internalPrice, publicPrice } = body;
 
     // Verificar que la cita pertenece al usuario
     const existingAppointment = await prisma.appointment.findFirst({
@@ -31,6 +31,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         ...(duration && { duration: parseInt(duration) }),
         ...(notes !== undefined && { notes }),
         ...(status && { status }),
+        ...(internalComment !== undefined && { internalComment }),
+        ...(internalPrice !== undefined && { internalPrice: internalPrice ? parseInt(internalPrice) : null }),
+        ...(publicPrice !== undefined && { publicPrice: publicPrice ? parseInt(publicPrice) : null }),
         updatedAt: new Date(),
       },
       include: {

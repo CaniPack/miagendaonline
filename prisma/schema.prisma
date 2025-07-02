@@ -27,17 +27,20 @@ model User {
 }
 
 model Appointment {
-  id             String            @id @default(cuid())
-  user           User              @relation(fields: [userId], references: [id])
-  userId         String
-  customer       Customer          @relation(fields: [customerId], references: [id])
-  customerId     String
-  date           DateTime
-  duration       Int               // en minutos
-  status         AppointmentStatus @default(PENDING)
-  notes          String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  user             User              @relation(fields: [userId], references: [id])
+  userId           String
+  customer         Customer          @relation(fields: [customerId], references: [id])
+  customerId       String
+  date             DateTime
+  duration         Int               // en minutos
+  status           AppointmentStatus @default(PENDING)
+  notes            String?           // Notas públicas/del cliente
+  internalComment  String?           // Comentario interno del profesional
+  internalPrice    Int?              // Precio interno en CLP
+  publicPrice      Int?              // Precio público/cobrado
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Customer {
@@ -121,6 +124,15 @@ model LandingPage {
   profileImage          String?  // URL de la imagen
   coverImage            String?  // URL de imagen de portada
   logo                  String?  // URL del logo
+  
+  // Servicios (JSON string) - array de {name, description, price}
+  services              String   @default("[]")
+  
+  // Configuración del calendario
+  showCalendar          Boolean  @default(true)
+  calendarDescription   String?  // Texto descriptivo del calendario
+  appointmentDuration   Int      @default(60)   // Duración por defecto de citas en minutos
+  bufferTime            Int      @default(0)    // Tiempo de buffer entre citas en minutos
   
   // Configuración del botón de agendar
   buttonText            String   @default("Agendar Hora")

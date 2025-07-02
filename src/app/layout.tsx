@@ -25,18 +25,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mi Agenda Online - Sistema de Citas Profesional",
-  description: "Sistema completo de gestión de citas con autenticación, clientes y planes de suscripción",
+  title: "Mi Agenda Online - Sistema Profesional de Citas",
+  description: "Plataforma profesional para gestión de citas, clientes e ingresos",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <ConditionalClerkProvider>
-      <html lang="es">
+      <html lang="es" suppressHydrationWarning={true}>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

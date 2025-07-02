@@ -25,7 +25,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(customers);
+    return NextResponse.json({ customers });
   } catch (error) {
     console.error('Error al obtener clientes:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });

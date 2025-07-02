@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
 // GET - Obtener cliente específico
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 // PUT - Actualizar cliente específico
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -103,7 +103,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE - Eliminar cliente específico
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

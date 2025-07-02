@@ -19,4 +19,15 @@ export async function getAuthUser() {
   } else {
     return await auth();
   }
+}
+
+export function getCurrentUser(): string {
+  const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
+  
+  if (isDevelopment) {
+    return 'user_dev_12345';
+  } else {
+    // En producción, esto necesitaría llamar a auth() y extraer el userId
+    throw new Error('getCurrentUser en producción requiere implementación async');
+  }
 } 
