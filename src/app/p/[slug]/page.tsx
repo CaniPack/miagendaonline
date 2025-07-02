@@ -11,7 +11,11 @@ import {
   User,
   MessageCircle,
   ExternalLink,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  X
 } from 'lucide-react';
 
 interface FormField {
@@ -77,6 +81,11 @@ export default function LandingPage() {
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  
+  // Estados para el calendario elegante
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLandingPage();
@@ -127,6 +136,91 @@ export default function LandingPage() {
     } finally {
       setLoadingSlots(false);
     }
+  };
+
+  // Funciones para el calendario elegante
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+    
+    // Días vacíos al principio
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  const navigateCalendar = (direction: 'prev' | 'next') => {
+    setCurrentCalendarDate(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  const isDateAvailable = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return availableSlots.some(slot => slot.date === dateStr && slot.slots.length > 0);
+  };
+
+  const isDateSelected = (date: Date) => {
+    if (!selectedDate) return false;
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  const isDateToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isDatePast = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  const handleDateSelect = (date: Date) => {
+    if (isDatePast(date)) return;
+    
+    setSelectedDate(date);
+    setSelectedTime(null);
+    
+    // Actualizar selectedSlot para compatibilidad
+    const dateStr = date.toISOString().split('T')[0];
+    const daySlot = availableSlots.find(slot => slot.date === dateStr);
+    if (daySlot && daySlot.slots.length > 0) {
+      // No seleccionar automáticamente, dejar que el usuario elija
+      setSelectedSlot(null);
+    }
+  };
+
+  const getTimeSlotsForSelectedDate = () => {
+    if (!selectedDate) return [];
+    
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    const daySlot = availableSlots.find(slot => slot.date === dateStr);
+    return daySlot?.slots || [];
+  };
+
+  const handleTimeSelect = (slot: any) => {
+    setSelectedTime(slot.time);
+    setSelectedSlot(slot.datetime);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -369,150 +463,268 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Modal de Formulario */}
+            {/* Modal de Formulario Elegante */}
       {showForm && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={() => setShowForm(false)}
         >
           <div 
-            className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Agendar con {landingPage.professionalName}
-                </h3>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Agendar con {landingPage.professionalName}
+                  </h3>
+                  <p className="text-gray-600 mt-1">
+                    {landingPage.calendarDescription || 'Selecciona una fecha y hora disponible para agendar tu cita'}
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-full transition-colors"
                 >
-                  ✕
+                  <X className="h-6 w-6" />
                 </button>
               </div>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(95vh-140px)]">
+              <form onSubmit={handleSubmit}>
                 {/* Calendario */}
                 {landingPage.showCalendar && (
-                  <div className="border-b pb-6 mb-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-3">
-                      Selecciona fecha y hora
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {landingPage.calendarDescription || 'Selecciona una fecha y hora disponible para agendar tu cita'}
-                    </p>
-                    
+                  <div className="p-8">
                     {loadingSlots ? (
-                      <div className="text-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-2 text-sm text-gray-500">Cargando horarios disponibles...</p>
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-300 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Cargando horarios disponibles...</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {availableSlots.length > 0 ? (
-                          availableSlots.map((day) => (
-                            <div key={day.date} className="border border-gray-200 rounded-lg p-4">
-                              <h5 className="font-medium text-gray-900 mb-3 capitalize">
-                                {day.dayName} - {new Date(day.date).toLocaleDateString('es-ES', { 
+                      <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Calendario Visual */}
+                        <div className="space-y-6">
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900 mb-2">Selecciona una fecha</h4>
+                            <p className="text-sm text-gray-600">Los días con disponibilidad aparecen resaltados</p>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded-xl p-6">
+                            {/* Header del calendario */}
+                            <div className="flex items-center justify-between mb-6">
+                              <h5 className="text-lg font-semibold text-gray-900 capitalize">
+                                {currentCalendarDate.toLocaleDateString('es-ES', { 
+                                  month: 'long', 
+                                  year: 'numeric' 
+                                })}
+                              </h5>
+                              <div className="flex space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => navigateCalendar('prev')}
+                                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                  <ChevronLeft className="h-5 w-5 text-gray-600" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => navigateCalendar('next')}
+                                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Días de la semana */}
+                            <div className="grid grid-cols-7 gap-1 mb-4">
+                              {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
+                                <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                                  {day}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Días del mes */}
+                            <div className="grid grid-cols-7 gap-1">
+                              {getDaysInMonth(currentCalendarDate).map((date, index) => {
+                                if (!date) {
+                                  return <div key={index} className="h-10"></div>;
+                                }
+
+                                const isAvailable = isDateAvailable(date);
+                                const isSelected = isDateSelected(date);
+                                const isToday = isDateToday(date);
+                                const isPast = isDatePast(date);
+
+                                return (
+                                  <button
+                                    key={date.getDate()}
+                                    type="button"
+                                    onClick={() => handleDateSelect(date)}
+                                    disabled={isPast || !isAvailable}
+                                    className={`
+                                      h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200
+                                      ${isSelected 
+                                        ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
+                                        : isAvailable && !isPast
+                                        ? 'bg-white text-gray-900 hover:bg-blue-50 hover:text-blue-600 shadow-sm border border-blue-200'
+                                        : isPast
+                                        ? 'text-gray-300 cursor-not-allowed'
+                                        : 'text-gray-400 cursor-not-allowed'
+                                      }
+                                      ${isToday && !isSelected ? 'ring-2 ring-blue-600 ring-opacity-50' : ''}
+                                      ${isAvailable && !isPast ? 'hover:shadow-md' : ''}
+                                    `}
+                                  >
+                                    {date.getDate()}
+                                    {isAvailable && !isPast && (
+                                      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full"></div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Selección de horarios */}
+                        <div className="space-y-6">
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                              <Clock className="h-5 w-5 mr-2 text-gray-600" />
+                              Horarios disponibles
+                            </h4>
+                            {selectedDate && (
+                              <p className="text-sm text-gray-600">
+                                {selectedDate.toLocaleDateString('es-ES', { 
+                                  weekday: 'long',
                                   day: 'numeric', 
                                   month: 'long' 
                                 })}
-                              </h5>
-                              {day.slots.length > 0 ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                  {day.slots.map((slot: any) => (
+                              </p>
+                            )}
+                          </div>
+                          
+                          {selectedDate ? (
+                            <div className="bg-gray-50 rounded-xl p-6">
+                              {getTimeSlotsForSelectedDate().length > 0 ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                  {getTimeSlotsForSelectedDate().map((slot: any) => (
                                     <button
                                       key={slot.datetime}
                                       type="button"
-                                      onClick={() => setSelectedSlot(slot.datetime)}
-                                      className={`px-3 py-2 text-sm rounded-md border ${
-                                        selectedSlot === slot.datetime
-                                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                          : 'border-gray-300 hover:border-gray-400'
-                                      }`}
+                                      onClick={() => handleTimeSelect(slot)}
+                                      className={`
+                                        px-4 py-3 text-sm font-medium rounded-lg border-2 transition-all duration-200
+                                        ${selectedTime === slot.time
+                                          ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-lg transform scale-105'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
+                                        }
+                                      `}
                                     >
                                       {slot.time}
                                     </button>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-sm text-gray-500">No hay horarios disponibles</p>
+                                <div className="text-center py-8">
+                                  <Clock className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                                  <p className="text-gray-500">No hay horarios disponibles para esta fecha</p>
+                                </div>
                               )}
                             </div>
-                          ))
-                        ) : (
-                          <div className="text-center py-6">
-                            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">
-                              No hay horarios disponibles en los próximos días
-                            </p>
-                          </div>
-                        )}
+                          ) : (
+                            <div className="bg-gray-50 rounded-xl p-8 text-center">
+                              <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                              <p className="text-gray-500">Selecciona una fecha para ver los horarios disponibles</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
                 
-                {formFields.map((field) => (
-                  <div key={field.name}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {field.label} {field.required && <span className="text-red-500">*</span>}
-                    </label>
+                {/* Formulario */}
+                <div className="px-8 pb-8">
+                  <div className="border-t border-gray-200 pt-8">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-6">Tus datos</h4>
                     
-                    {field.type === 'textarea' ? (
-                                             <textarea
-                         rows={3}
-                         value={formData[field.name] || ''}
-                         onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                         required={field.required}
-                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-                         placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
-                       />
-                    ) : (
-                                             <input
-                         type={field.type}
-                         value={formData[field.name] || ''}
-                         onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                         required={field.required}
-                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-                         placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
-                       />
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {formFields.map((field) => (
+                        <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                          </label>
+                          
+                          {field.type === 'textarea' ? (
+                            <textarea
+                              rows={4}
+                              value={formData[field.name] || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                              required={field.required}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-colors"
+                              placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
+                            />
+                          ) : (
+                            <input
+                              type={field.type}
+                              value={formData[field.name] || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                              required={field.required}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-colors"
+                              placeholder={`Ingresa tu ${field.label.toLowerCase()}`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {landingPage.requirePayment && (
+                      <div 
+                        className="mt-6 p-4 rounded-xl border-l-4"
+                        style={{ 
+                          backgroundColor: colors.secondary,
+                          borderColor: colors.primary 
+                        }}
+                      >
+                        <p className="text-sm text-gray-700">
+                          <strong>Nota:</strong> Se requiere pago antes de confirmar la cita.
+                        </p>
+                      </div>
                     )}
                   </div>
-                ))}
-                
-                {landingPage.requirePayment && (
-                  <div 
-                    className="p-4 rounded-lg border-l-4"
-                    style={{ 
-                      backgroundColor: colors.secondary,
-                      borderColor: colors.primary 
-                    }}
-                  >
-                    <p className="text-sm text-gray-700">
-                      <strong>Nota:</strong> Se requiere pago antes de confirmar la cita.
-                    </p>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
+                  <div className="flex space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowForm(false)}
+                      className="flex-1 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || (landingPage.showCalendar && !selectedSlot)}
+                      className="flex-1 px-6 py-3 text-white rounded-xl font-medium hover:opacity-90 transition-all disabled:opacity-50 shadow-lg"
+                      style={{ backgroundColor: colors.primary }}
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Enviando...
+                        </span>
+                      ) : 
+                       (landingPage.showCalendar && !selectedSlot) ? 'Selecciona fecha y hora' : 'Confirmar cita'}
+                    </button>
                   </div>
-                )}
-                
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting || (landingPage.showCalendar && !selectedSlot)}
-                    className="flex-1 px-4 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                    style={{ backgroundColor: colors.primary }}
-                  >
-                    {submitting ? 'Enviando...' : 
-                     (landingPage.showCalendar && !selectedSlot) ? 'Selecciona una hora' : 'Agendar'}
-                  </button>
                 </div>
               </form>
             </div>

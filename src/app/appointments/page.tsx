@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { useToast } from '@/components/ToastProvider';
 import Navigation from '@/components/Navigation';
-import { Calendar, Clock, User, Plus, Filter, Search, Edit, Trash2, Eye, Mail, Phone, Briefcase, Lock, X } from 'lucide-react';
+import { Calendar, Clock, User, Plus, Filter, Search, Edit, Trash2, Eye, Mail, Phone, Briefcase, Lock, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -68,6 +68,11 @@ export default function AppointmentsPage() {
     notes: '',
   });
 
+  // Calendar state for modal
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [selectedDateForTimeView, setSelectedDateForTimeView] = useState<Date | null>(null);
+  const [showTimeBlocks, setShowTimeBlocks] = useState(false);
+
   // Customer modal states
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -106,6 +111,27 @@ export default function AppointmentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Detectar conflictos de horarios
+    const conflicts = detectTimeConflicts(formData.date, formData.time, formData.duration);
+    
+    // Si hay conflictos, mostrar alerta al administrador (siempre permitir para admin)
+    if (conflicts.length > 0) {
+      const conflictMessages = conflicts.map(apt => 
+        `• ${apt.customer.name} - ${formatTime(apt.date)} (${apt.duration} min)`
+      ).join('\n');
+      
+      const proceed = confirm(
+        `⚠️ CONFLICTO DE HORARIOS DETECTADO\n\n` +
+        `La nueva cita se solapará con:\n${conflictMessages}\n\n` +
+        `Como administrador, puedes continuar y crear la cita de todas formas.\n\n` +
+        `¿Deseas proceder?`
+      );
+      
+      if (!proceed) {
+        return; // Cancelar si el admin no quiere proceder
+      }
+    }
+    
     const appointmentData = {
       customerId: formData.customerId,
       date: new Date(`${formData.date}T${formData.time}`).toISOString(),
@@ -130,9 +156,13 @@ export default function AppointmentsPage() {
         await fetchAppointments();
         setShowForm(false);
         resetForm();
+        const successMessage = conflicts.length > 0 
+          ? 'Cita guardada con solapamiento' 
+          : (editingAppointment ? 'La cita se ha actualizado exitosamente' : 'La cita se ha creado exitosamente');
+        
         showSuccess(
           editingAppointment ? '¡Cita actualizada!' : '¡Cita creada!',
-          editingAppointment ? 'La cita se ha actualizado exitosamente' : 'La cita se ha creado exitosamente'
+          successMessage
         );
       } else {
         const error = await response.json();
@@ -161,6 +191,13 @@ export default function AppointmentsPage() {
       notes: appointment.notes || '',
     });
     setEditingAppointment(appointment);
+    
+    // Configurar el calendario para mostrar la fecha de la cita
+    const dateForCalendar = new Date(year, appointmentDate.getMonth(), appointmentDate.getDate());
+    setCurrentCalendarDate(new Date(appointmentDate));
+    setSelectedDateForTimeView(dateForCalendar);
+    setShowTimeBlocks(true);
+    
     setShowForm(true);
   };
 
@@ -194,6 +231,8 @@ export default function AppointmentsPage() {
       notes: '',
     });
     setEditingAppointment(null);
+    setSelectedDateForTimeView(null);
+    setShowTimeBlocks(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -567,6 +606,166 @@ export default function AppointmentsPage() {
     );
   };
 
+  // Calendar functions for modal
+  const getCalendarDays = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days = [];
+    const current = new Date(startDate);
+    
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return days;
+  };
+
+  const getAppointmentsForDate = (date: Date) => {
+    const dateStr = date.toDateString();
+    return appointments.filter(apt => 
+      new Date(apt.date).toDateString() === dateStr
+    );
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isSameMonth = (date: Date, month: Date) => {
+    return date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
+  };
+
+  const isSelectedDate = (date: Date) => {
+    if (!formData.date) return false;
+    const selectedDate = new Date(formData.date);
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  const handleDateClick = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (date >= today) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setFormData({ ...formData, date: `${year}-${month}-${day}` });
+      setSelectedDateForTimeView(date);
+      setShowTimeBlocks(true);
+    }
+  };
+
+  // Generar bloques de tiempo (cada 30 minutos de 8:00 a 20:00)
+  const generateTimeBlocks = () => {
+    const blocks = [];
+    for (let hour = 8; hour <= 20; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        if (hour === 20 && minute > 0) break; // Terminar a las 20:00
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        blocks.push({
+          time: timeString,
+          hour,
+          minute
+        });
+      }
+    }
+    return blocks;
+  };
+
+  // Verificar si un bloque de tiempo está ocupado
+  const isTimeBlockOccupied = (date: Date, hour: number, minute: number) => {
+    if (!selectedDateForTimeView) return false;
+    
+    const blockStart = new Date(date);
+    blockStart.setHours(hour, minute, 0, 0);
+    const blockEnd = new Date(blockStart);
+    blockEnd.setMinutes(blockEnd.getMinutes() + 30);
+
+    return appointments.some(apt => {
+      if (editingAppointment && apt.id === editingAppointment.id) return false; // Excluir la cita que se está editando
+      
+      const aptDate = new Date(apt.date);
+      if (aptDate.toDateString() !== date.toDateString()) return false;
+      
+      const aptStart = new Date(aptDate);
+      const aptEnd = new Date(aptDate);
+      aptEnd.setMinutes(aptEnd.getMinutes() + apt.duration);
+      
+      // Verificar solapamiento
+      return (aptStart < blockEnd && aptEnd > blockStart);
+    });
+  };
+
+  // Obtener citas en un bloque específico
+  const getAppointmentsInTimeBlock = (date: Date, hour: number, minute: number) => {
+    if (!selectedDateForTimeView) return [];
+    
+    const blockStart = new Date(date);
+    blockStart.setHours(hour, minute, 0, 0);
+    const blockEnd = new Date(blockStart);
+    blockEnd.setMinutes(blockEnd.getMinutes() + 30);
+
+    return appointments.filter(apt => {
+      if (editingAppointment && apt.id === editingAppointment.id) return false;
+      
+      const aptDate = new Date(apt.date);
+      if (aptDate.toDateString() !== date.toDateString()) return false;
+      
+      const aptStart = new Date(aptDate);
+      const aptEnd = new Date(aptDate);
+      aptEnd.setMinutes(aptEnd.getMinutes() + apt.duration);
+      
+      return (aptStart < blockEnd && aptEnd > blockStart);
+    });
+  };
+
+  // Detectar conflictos de horarios
+  const detectTimeConflicts = (selectedDate: string, selectedTime: string, duration: number) => {
+    if (!selectedDate || !selectedTime) return [];
+    
+    const newAptStart = new Date(`${selectedDate}T${selectedTime}`);
+    const newAptEnd = new Date(newAptStart);
+    newAptEnd.setMinutes(newAptEnd.getMinutes() + duration);
+
+    return appointments.filter(apt => {
+      if (editingAppointment && apt.id === editingAppointment.id) return false;
+      
+      const aptDate = new Date(apt.date);
+      const aptStart = new Date(aptDate);
+      const aptEnd = new Date(aptDate);
+      aptEnd.setMinutes(aptEnd.getMinutes() + apt.duration);
+      
+      // Verificar solapamiento
+      return (aptStart < newAptEnd && aptEnd > newAptStart);
+    });
+  };
+
+  // Manejar selección de bloque de tiempo
+  const handleTimeBlockClick = (hour: number, minute: number) => {
+    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    setFormData({ ...formData, time: timeString });
+  };
+
+  const navigateCalendar = (direction: 'prev' | 'next') => {
+    setCurrentCalendarDate(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
   const handleCreateNewCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -787,11 +986,11 @@ export default function AppointmentsPage() {
           }}
         >
           <div 
-            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
                   {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
                 </h2>
@@ -806,7 +1005,10 @@ export default function AppointmentsPage() {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Formulario */}
+                <div>
+                  <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-sm font-medium text-gray-700">
@@ -894,25 +1096,227 @@ export default function AppointmentsPage() {
                   />
                 </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      resetForm();
-                    }}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                  >
-                    {editingAppointment ? 'Actualizar' : 'Crear'} Cita
-                  </button>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowForm(false);
+                          resetForm();
+                        }}
+                        className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      >
+                        {editingAppointment ? 'Actualizar' : 'Crear'} Cita
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              </form>
+
+                {/* Calendario */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Calendario</h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => navigateCalendar('prev')}
+                        className="p-1 hover:bg-gray-200 rounded"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <span className="text-sm font-medium min-w-[120px] text-center">
+                        {currentCalendarDate.toLocaleDateString('es-ES', { 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => navigateCalendar('next')}
+                        className="p-1 hover:bg-gray-200 rounded"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Días de la semana */}
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
+                      <div key={day} className="p-2 text-xs font-medium text-gray-500 text-center">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Días del calendario */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {getCalendarDays(currentCalendarDate).map((date, index) => {
+                      const appointmentsForDate = getAppointmentsForDate(date);
+                      const isCurrentMonth = isSameMonth(date, currentCalendarDate);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const isPastDate = date < today;
+                      const isSelected = isSelectedDate(date);
+                      const isTodayDate = isToday(date);
+
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleDateClick(date)}
+                          disabled={isPastDate}
+                          className={`
+                            relative p-2 text-sm rounded hover:bg-blue-50 transition-colors
+                            ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                            ${isTodayDate ? 'bg-blue-100 text-blue-700 font-medium' : ''}
+                            ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                            ${isPastDate ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                            ${appointmentsForDate.length > 0 && !isSelected ? 'bg-green-100' : ''}
+                          `}
+                        >
+                          <span>{date.getDate()}</span>
+                          {appointmentsForDate.length > 0 && (
+                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex space-x-0.5">
+                              <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-green-600'}`} />
+                              {appointmentsForDate.length > 1 && (
+                                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-green-600'}`} />
+                              )}
+                              {appointmentsForDate.length > 2 && (
+                                <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-green-600'}`} />
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Vista de bloques de tiempo */}
+                  {showTimeBlocks && selectedDateForTimeView && (
+                    <div className="mt-4 p-3 bg-white rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-900">
+                          Disponibilidad - {selectedDateForTimeView.toLocaleDateString('es-ES', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                          })}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setShowTimeBlocks(false)}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Ocultar horarios
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-1 max-h-64 overflow-y-auto">
+                        {generateTimeBlocks().map((block) => {
+                          const isOccupied = isTimeBlockOccupied(selectedDateForTimeView, block.hour, block.minute);
+                          const appointments = getAppointmentsInTimeBlock(selectedDateForTimeView, block.hour, block.minute);
+                          const isSelectedTime = formData.time === block.time;
+                          
+                          return (
+                            <button
+                              key={block.time}
+                              type="button"
+                              onClick={() => handleTimeBlockClick(block.hour, block.minute)}
+                              className={`
+                                p-2 text-xs rounded border transition-colors text-left
+                                ${isSelectedTime ? 'bg-blue-500 text-white border-blue-600' : ''}
+                                ${isOccupied && !isSelectedTime ? 'bg-red-100 border-red-300 text-red-700' : ''}
+                                ${!isOccupied && !isSelectedTime ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' : ''}
+                              `}
+                            >
+                              <div className="font-medium">{block.time}</div>
+                              {appointments.length > 0 && (
+                                <div className="text-[10px] mt-1 truncate">
+                                  {appointments[0].customer.name}
+                                  {appointments.length > 1 && ` +${appointments.length - 1}`}
+                                </div>
+                              )}
+                              {appointments.length === 0 && (
+                                <div className="text-[10px] mt-1 text-gray-500">
+                                  Disponible
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-3 flex items-center space-x-4 text-xs">
+                        <div className="flex items-center space-x-1">
+                          <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
+                          <span>Disponible</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                          <span>Ocupado</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                          <span>Seleccionado</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Información de la fecha seleccionada (versión simplificada) */}
+                  {formData.date && !showTimeBlocks && (
+                    <div className="mt-4 p-3 bg-white rounded-lg border">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        Citas para {new Date(formData.date + 'T00:00:00').toLocaleDateString('es-ES', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </h4>
+                      {(() => {
+                        const selectedDate = new Date(formData.date + 'T00:00:00');
+                        const dayAppointments = getAppointmentsForDate(selectedDate);
+                        
+                        if (dayAppointments.length === 0) {
+                          return (
+                            <p className="text-sm text-gray-500">No hay citas programadas</p>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            {dayAppointments.map((apt) => (
+                              <div key={apt.id} className="flex justify-between items-center text-xs">
+                                <span className="font-medium">{apt.customer.name}</span>
+                                <span className="text-gray-500">
+                                  {formatTime(apt.date)} ({apt.duration} min)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDateForTimeView(new Date(formData.date + 'T00:00:00'));
+                          setShowTimeBlocks(true);
+                        }}
+                        className="mt-2 text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Ver disponibilidad horaria →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
