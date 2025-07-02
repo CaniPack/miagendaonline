@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { useToast } from '@/components/ToastProvider';
 import Navigation from '@/components/Navigation';
-import { Users, Plus, Search, Edit, Trash2, Phone, Mail, Calendar, UserIcon, MailIcon, PhoneIcon, CalendarIcon, Lock as LockIcon, Briefcase as BriefcaseIcon } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Phone, Mail, Calendar, UserIcon, MailIcon, PhoneIcon, CalendarIcon, Lock as LockIcon, Briefcase as BriefcaseIcon, X } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -42,6 +43,7 @@ interface CustomerDetail {
 
 export default function CustomersPage() {
   const { user } = useAuthUser();
+  const { showSuccess, showError } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -81,12 +83,9 @@ export default function CustomersPage() {
     e.preventDefault();
     
     try {
-      const url = editingCustomer 
-        ? `/api/customers/${editingCustomer.id}` 
-        : '/api/customers';
-      
+      const url = editingCustomer ? `/api/customers/${editingCustomer.id}` : '/api/customers';
       const method = editingCustomer ? 'PUT' : 'POST';
-
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -95,15 +94,19 @@ export default function CustomersPage() {
 
       if (response.ok) {
         await fetchCustomers();
-        resetForm();
         setShowForm(false);
+        resetForm();
+        showSuccess(
+          editingCustomer ? '¡Cliente actualizado!' : '¡Cliente creado!',
+          editingCustomer ? 'Los datos del cliente se han actualizado' : 'El cliente se ha agregado exitosamente'
+        );
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al guardar el cliente');
+        showError('Error al guardar', error.error || 'No se pudo guardar el cliente');
       }
     } catch (error) {
-      console.error('Error al guardar cliente:', error);
-      alert('Error al guardar el cliente');
+      console.error('Error:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
   };
 
@@ -117,23 +120,24 @@ export default function CustomersPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (customerId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este cliente?')) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) return;
 
     try {
-      const response = await fetch(`/api/customers/${customerId}`, {
+      const response = await fetch(`/api/customers/${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         await fetchCustomers();
+        showSuccess('¡Cliente eliminado!', 'El cliente se ha eliminado exitosamente');
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al eliminar el cliente');
+        showError('Error al eliminar', error.error || 'No se pudo eliminar el cliente');
       }
     } catch (error) {
-      console.error('Error al eliminar cliente:', error);
-      alert('Error al eliminar el cliente');
+      console.error('Error:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
   };
 
@@ -681,12 +685,32 @@ export default function CustomersPage() {
 
       {/* Modal de Formulario */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowForm(false);
+            resetForm();
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {editingCustomer ? 'Editar Cliente' : 'Nuevo Cliente'}
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingCustomer ? 'Editar Cliente' : 'Nuevo Cliente'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowForm(false);
+                    resetForm();
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

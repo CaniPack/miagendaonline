@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { useToast } from '@/components/ToastProvider';
 import Navigation from '@/components/Navigation';
+import NotificationBell from '@/components/NotificationBell';
 import { 
   UsersIcon, 
   SearchIcon,
@@ -59,6 +62,8 @@ interface CustomerStats {
 }
 
 export default function ClientesPage() {
+  const { user } = useAuthUser();
+  const { showSuccess, showError } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [stats, setStats] = useState<CustomerStats | null>(null);
@@ -382,14 +387,14 @@ export default function ClientesPage() {
         }
         
         setCustomerModalEditMode(false);
-        alert('Cliente actualizado exitosamente');
+        showSuccess('Cliente actualizado exitosamente');
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al actualizar el cliente');
+        showError(error.error || 'Error al actualizar el cliente');
       }
     } catch (error) {
       console.error('Error updating customer:', error);
-      alert('Error al actualizar el cliente');
+      showError('Error al actualizar el cliente');
     }
   };
 
@@ -438,14 +443,14 @@ export default function ClientesPage() {
           notes: ''
         });
         setShowNewAppointmentForm(false);
-        alert('Cita creada exitosamente');
+        showSuccess('Cita creada exitosamente');
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al crear la cita');
+        showError(error.error || 'Error al crear la cita');
       }
     } catch (error) {
       console.error('Error creating appointment:', error);
-      alert('Error al crear la cita');
+      showError('Error al crear la cita');
     }
   };
 
@@ -519,14 +524,14 @@ export default function ClientesPage() {
         }
         
         cancelEditingAppointment();
-        alert('Cita actualizada exitosamente');
+        showSuccess('Cita actualizada exitosamente');
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al actualizar la cita');
+        showError(error.error || 'Error al actualizar la cita');
       }
     } catch (error) {
       console.error('Error updating appointment:', error);
-      alert('Error al actualizar la cita');
+      showError('Error al actualizar la cita');
     }
   };
 
@@ -536,8 +541,18 @@ export default function ClientesPage() {
     const customerStatus = getCustomerStatus(selectedCustomer);
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        onClick={() => {
+          setShowCustomerModal(false);
+          setCustomerModalEditMode(false);
+          cancelEditCustomer();
+        }}
+      >
+        <div 
+          className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">

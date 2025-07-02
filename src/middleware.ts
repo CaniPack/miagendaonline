@@ -1,17 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default function middleware(req: NextRequest) {
+export function middleware(request: NextRequest) {
+  // En modo desarrollo, simplemente pasar todas las requests
   const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
   
-  // En modo desarrollo, permitir acceso sin autenticación
   if (isDevelopment) {
     return NextResponse.next();
   }
   
-  // En modo producción, redirigir a configuración
-  return NextResponse.redirect(new URL('/setup-clerk', req.url));
+  // En producción, también pasar por ahora - Clerk se maneja en el client side
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }; 

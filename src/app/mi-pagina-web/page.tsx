@@ -23,6 +23,7 @@ import {
   Image,
   Clock
 } from 'lucide-react';
+import { useToast } from '@/components/ToastProvider';
 
 interface FormField {
   name: string;
@@ -87,6 +88,7 @@ const colorSchemes = [
 
 export default function MiPaginaWebPage() {
   const { user } = useAuthUser();
+  const { showSuccess, showError } = useToast();
   const [landingPage, setLandingPage] = useState<LandingPageData>({
     professionalName: user?.firstName + ' ' + user?.lastName || '',
     title: '',
@@ -189,13 +191,13 @@ export default function MiPaginaWebPage() {
           formFields: Array.isArray(parsedFormFields) ? parsedFormFields : defaultFormFields,
           services: Array.isArray(parsedServices) ? parsedServices : [],
         });
-        alert('✅ Landing page guardada exitosamente!');
+        showSuccess('¡Landing page guardada!', 'Los cambios se han guardado exitosamente');
       } else {
-        alert('❌ Error al guardar');
+        showError('Error al guardar', 'No se pudieron guardar los cambios');
       }
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('❌ Error al guardar');
+      showError('Error al guardar', 'Ocurrió un error inesperado');
     } finally {
       setSaving(false);
     }
@@ -258,17 +260,17 @@ export default function MiPaginaWebPage() {
   const handleImageUpload = async (file: File) => {
     // Validaciones del lado del cliente
     if (!file) {
-      alert('❌ Por favor selecciona un archivo');
+      showError('Archivo requerido', 'Por favor selecciona un archivo');
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert('❌ Solo se permiten archivos de imagen (JPG, PNG, GIF)');
+      showError('Tipo de archivo no válido', 'Solo se permiten archivos de imagen (JPG, PNG, GIF)');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('❌ La imagen no puede exceder 5MB');
+      showError('Archivo muy grande', 'La imagen no puede exceder 5MB');
       return;
     }
 
@@ -297,7 +299,7 @@ export default function MiPaginaWebPage() {
           ...prev,
           profileImage: result.url
         }));
-        alert('✅ Imagen subida exitosamente!');
+        showSuccess('¡Imagen subida!', 'La foto de perfil se ha subido exitosamente');
       } else {
         // Obtener el mensaje de error específico del servidor
         let errorMessage = 'Error desconocido';
@@ -308,11 +310,11 @@ export default function MiPaginaWebPage() {
           errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
         console.error('Error del servidor:', errorMessage);
-        alert(`❌ Error al subir imagen: ${errorMessage}`);
+        showError('Error al subir imagen', errorMessage);
       }
     } catch (error) {
       console.error('Error de red al subir imagen:', error);
-      alert(`❌ Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      showError('Error de conexión', error instanceof Error ? error.message : 'Error desconocido');
     }
   };
 

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
 // GET - Obtener todos los pagos del usuario
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -26,15 +26,18 @@ export async function GET() {
 
     return NextResponse.json(payments);
   } catch (error) {
-    console.error('Error al obtener pagos:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error en payments API:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 }
 
 // POST - Crear nuevo pago (simulado)
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

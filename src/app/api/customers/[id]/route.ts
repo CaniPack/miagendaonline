@@ -11,11 +11,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Buscar el usuario en la base de datos
+    const userExists = await prisma.user.findUnique({
+      where: { clerkId: userId }
+    });
+
+    if (!userExists) {
+      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 });
+    }
+
     const customer = await prisma.customer.findUnique({
       where: { id: params.id },
       include: {
         appointments: {
-          where: { userId }, // Solo citas del usuario actual
+          where: { userId: userExists.id }, // Solo citas del usuario actual usando el ID de la BD
           orderBy: { date: 'desc' },
           include: {
             user: {
@@ -27,7 +36,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           },
         },
         _count: {
-          select: { appointments: true },
+          select: { 
+            appointments: {
+              where: { userId: userExists.id } // Contar solo las citas del usuario actual
+            }
+          },
         },
       },
     });

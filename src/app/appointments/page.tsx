@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { useToast } from '@/components/ToastProvider';
 import Navigation from '@/components/Navigation';
-import { Calendar, Clock, User, Plus, Filter, Search, Edit, Trash2, Eye, Mail, Phone, Briefcase, Lock } from 'lucide-react';
+import { Calendar, Clock, User, Plus, Filter, Search, Edit, Trash2, Eye, Mail, Phone, Briefcase, Lock, X } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -40,6 +42,7 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const { user } = useAuthUser();
+  const { showSuccess, showError } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,14 @@ export default function AppointmentsPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // Estados para crear nuevo cliente
+  const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
+  const [newCustomerData, setNewCustomerData] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
   
   // Form state
   const [formData, setFormData] = useState({
@@ -95,44 +106,41 @@ export default function AppointmentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      // Crear fecha en zona horaria local sin conversión UTC
-      const [year, month, day] = formData.date.split('-').map(Number);
-      const [hours, minutes] = formData.time.split(':').map(Number);
-      const appointmentDate = new Date(year, month - 1, day, hours, minutes);
-      
-      const payload = {
-        customerId: formData.customerId,
-        date: appointmentDate.toISOString(),
-        duration: formData.duration,
-        notes: formData.notes || null,
-      };
+    const appointmentData = {
+      customerId: formData.customerId,
+      date: new Date(`${formData.date}T${formData.time}`).toISOString(),
+      duration: formData.duration,
+      status: 'PENDING',
+      notes: formData.notes
+    };
 
+    try {
       const url = editingAppointment 
         ? `/api/appointments/${editingAppointment.id}` 
         : '/api/appointments';
-      
       const method = editingAppointment ? 'PUT' : 'POST';
-
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(appointmentData),
       });
 
       if (response.ok) {
-        const result = await response.json();
         await fetchAppointments();
-        resetForm();
         setShowForm(false);
-        alert(editingAppointment ? 'Cita actualizada exitosamente' : 'Cita creada exitosamente');
+        resetForm();
+        showSuccess(
+          editingAppointment ? '¡Cita actualizada!' : '¡Cita creada!',
+          editingAppointment ? 'La cita se ha actualizado exitosamente' : 'La cita se ha creado exitosamente'
+        );
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al guardar la cita');
+        showError('Error al guardar', error.error || 'No se pudo guardar la cita');
       }
     } catch (error) {
-      console.error('Error al guardar cita:', error);
-      alert('Error al guardar la cita');
+      console.error('Error:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
   };
 
@@ -156,23 +164,24 @@ export default function AppointmentsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (appointmentId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta cita?')) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta cita?')) return;
 
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}`, {
+      const response = await fetch(`/api/appointments/${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         await fetchAppointments();
+        showSuccess('¡Cita eliminada!', 'La cita se ha eliminado exitosamente');
       } else {
         const error = await response.json();
-        alert(error.error || 'Error al eliminar la cita');
+        showError('Error al eliminar', error.error || 'No se pudo eliminar la cita');
       }
     } catch (error) {
-      console.error('Error al eliminar cita:', error);
-      alert('Error al eliminar la cita');
+      console.error('Error:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
   };
 
@@ -558,6 +567,33 @@ export default function AppointmentsPage() {
     );
   };
 
+  const handleCreateNewCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCustomerData),
+      });
+
+      if (response.ok) {
+        const newCustomer = await response.json();
+        await fetchCustomers(); // Actualizar la lista de clientes
+        setFormData({ ...formData, customerId: newCustomer.id }); // Seleccionar automáticamente el nuevo cliente
+        setShowNewCustomerModal(false);
+        setNewCustomerData({ name: '', email: '', phone: '' }); // Limpiar formulario
+        showSuccess('¡Cliente creado!', 'El cliente se ha creado y seleccionado automáticamente');
+      } else {
+        const error = await response.json();
+        showError('Error al crear cliente', error.error || 'No se pudo crear el cliente');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -743,18 +779,48 @@ export default function AppointmentsPage() {
 
       {/* Modal de Formulario */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowForm(false);
+            resetForm();
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowForm(false);
+                    resetForm();
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cliente
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Cliente
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCustomerModal(true)}
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Nuevo Cliente
+                    </button>
+                  </div>
                   <select
                     value={formData.customerId}
                     onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
@@ -844,6 +910,101 @@ export default function AppointmentsPage() {
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                   >
                     {editingAppointment ? 'Actualizar' : 'Crear'} Cita
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Crear Nuevo Cliente */}
+      {showNewCustomerModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowNewCustomerModal(false);
+            setNewCustomerData({ name: '', email: '', phone: '' });
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Crear Nuevo Cliente
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowNewCustomerModal(false);
+                    setNewCustomerData({ name: '', email: '', phone: '' });
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleCreateNewCustomer} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre *
+                  </label>
+                  <input
+                    type="text"
+                    value={newCustomerData.name}
+                    onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nombre completo del cliente"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newCustomerData.email}
+                    onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Teléfono
+                  </label>
+                  <input
+                    type="tel"
+                    value={newCustomerData.phone}
+                    onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCustomerModal(false);
+                      setNewCustomerData({ name: '', email: '', phone: '' });
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newCustomerData.name.trim()}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Crear Cliente
                   </button>
                 </div>
               </form>

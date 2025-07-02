@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
+import ToastProvider from '@/components/ToastProvider';
 import "./globals.css";
 
 // Wrapper condicional para desarrollo
@@ -37,12 +38,14 @@ export default function RootLayout({
   return (
     <ConditionalClerkProvider>
       <html lang="es" suppressHydrationWarning={true}>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children}
-        </body>
-      </html>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+          <ToastProvider>
+        {children}
+          </ToastProvider>
+      </body>
+    </html>
     </ConditionalClerkProvider>
   );
 }

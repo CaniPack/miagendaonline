@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
 // GET - Obtener todos los planes disponibles
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -28,7 +28,10 @@ export async function GET() {
 
     return NextResponse.json(plansWithFeatures);
   } catch (error) {
-    console.error('Error al obtener planes:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error en plans API:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 } 

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/auth-helper';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 Iniciando upload de imagen...');
     
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     console.log('🔐 Usuario autenticado:', userId);
     
     if (!userId) {

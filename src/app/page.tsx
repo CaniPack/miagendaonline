@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { UserButton } from '@clerk/nextjs';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { useToast } from '@/components/ToastProvider';
 import NotificationBell from '@/components/NotificationBell';
 import Navigation from '@/components/Navigation';
 import { useState, useEffect } from 'react';
@@ -84,6 +85,7 @@ interface Customer {
 
 export default function Home() {
   const { user, isLoaded } = useAuthUser();
+  const { showWarning } = useToast();
   const [stats, setStats] = useState<Stats>({
     appointmentsToday: 0,
     totalClients: 0,
@@ -189,7 +191,7 @@ export default function Home() {
     if (landingPageInfo?.slug && landingPageInfo?.isPublished) {
       window.open(`/p/${landingPageInfo.slug}`, '_blank');
     } else {
-      alert('Tu página no está publicada aún. Ve a "Mi Página Web" para publicarla.');
+      showWarning('Página no publicada', 'Tu página no está publicada aún. Ve a "Mi Página Web" para publicarla.');
     }
   };
 

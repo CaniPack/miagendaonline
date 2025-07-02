@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/components/ToastProvider';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   Calendar,
@@ -64,6 +65,7 @@ const colorSchemes = {
 export default function LandingPage() {
   const params = useParams();
   const router = useRouter();
+  const { showError } = useToast();
   const slug = params.slug as string;
 
   const [landingPage, setLandingPage] = useState<LandingPageData | null>(null);
@@ -143,7 +145,7 @@ export default function LandingPage() {
       setSubmitted(true);
     } catch (error) {
       console.error('Error al enviar formulario:', error);
-      alert('Error al enviar el formulario. Por favor intenta nuevamente.');
+      showError('Error al enviar formulario', 'Por favor intenta nuevamente');
     } finally {
       setSubmitting(false);
     }
@@ -369,8 +371,14 @@ export default function LandingPage() {
 
       {/* Modal de Formulario */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowForm(false)}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
