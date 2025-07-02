@@ -21,7 +21,9 @@ import {
   Briefcase,
   DollarSign,
   Image,
-  Clock
+  Clock,
+  ArrowLeft,
+  Home
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
@@ -37,6 +39,8 @@ interface Service {
   name: string;
   description: string;
   price: string;
+  duration?: number; // Duración específica del servicio en minutos (opcional)
+      bufferTime?: number; // Tiempo intermedio específico en minutos (opcional)
 }
 
 interface LandingPageData {
@@ -84,6 +88,7 @@ const colorSchemes = [
   { id: 'green', name: 'Verde Natural', primary: '#16a34a', secondary: '#dcfce7' },
   { id: 'purple', name: 'Morado Elegante', primary: '#9333ea', secondary: '#f3e8ff' },
   { id: 'orange', name: 'Naranja Energético', primary: '#ea580c', secondary: '#fed7aa' },
+  { id: 'pink', name: 'Rosa Sofisticado', primary: '#ec4899', secondary: '#fce7f3' },
 ];
 
 export default function MiPaginaWebPage() {
@@ -342,11 +347,24 @@ export default function MiPaginaWebPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <Globe className="h-6 w-6 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Mi Página Web</h1>
-                <p className="text-sm text-gray-500">Configura tu landing page profesional</p>
+            <div className="flex items-center space-x-4">
+              {/* Botón para volver al dashboard */}
+              <a
+                href="/"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+              </a>
+              
+              <div className="h-6 w-px bg-gray-300"></div>
+              
+              <div className="flex items-center space-x-3">
+                <Globe className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">Mi Página Web</h1>
+                  <p className="text-sm text-gray-500">Configura tu landing page profesional</p>
+                </div>
               </div>
             </div>
             
@@ -680,30 +698,78 @@ export default function MiPaginaWebPage() {
                                   />
                                 </div>
                                 
-                                <div className="w-full md:w-1/3">
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <DollarSign className="h-4 w-4 inline mr-1" />
-                                    Precio (solo números)
-                                  </label>
-                                  <div className="relative">
-                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <DollarSign className="h-4 w-4 inline mr-1" />
+                                      Precio (solo números)
+                                    </label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="100"
+                                        value={service.price.replace(/[^0-9]/g, '')}
+                                        onChange={(e) => {
+                                          const numericValue = e.target.value;
+                                          const formattedPrice = numericValue ? `$${parseInt(numericValue).toLocaleString('es-CL')}` : '';
+                                          updateService(service.id, { price: formattedPrice });
+                                        }}
+                                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                                        placeholder="50000"
+                                      />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Solo números. Se formateará automáticamente (ej: $50.000)
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <Clock className="h-4 w-4 inline mr-1" />
+                                      Duración (min)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="5"
+                                      max="240"
+                                      step="5"
+                                      value={service.duration || ''}
+                                      onChange={(e) => {
+                                        const duration = e.target.value ? parseInt(e.target.value) : undefined;
+                                        updateService(service.id, { duration });
+                                      }}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                                      placeholder={landingPage.appointmentDuration.toString()}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Opcional. Si vacío, usa duración general ({landingPage.appointmentDuration} min)
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <Plus className="h-4 w-4 inline mr-1" />
+                                      Tiempo intermedio (min)
+                                    </label>
                                     <input
                                       type="number"
                                       min="0"
-                                      step="100"
-                                      value={service.price.replace(/[^0-9]/g, '')}
+                                      max="60"
+                                      step="5"
+                                      value={service.bufferTime || ''}
                                       onChange={(e) => {
-                                        const numericValue = e.target.value;
-                                        const formattedPrice = numericValue ? `$${parseInt(numericValue).toLocaleString('es-CL')}` : '';
-                                        updateService(service.id, { price: formattedPrice });
+                                        const bufferTime = e.target.value ? parseInt(e.target.value) : undefined;
+                                        updateService(service.id, { bufferTime });
                                       }}
-                                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-                                      placeholder="50000"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                                      placeholder={landingPage.bufferTime.toString()}
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Opcional. Si vacío, usa tiempo intermedio general ({landingPage.bufferTime} min)
+                                    </p>
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Solo números. Se formateará automáticamente (ej: $50.000)
-                                  </p>
                                 </div>
                               </div>
                               
@@ -723,7 +789,28 @@ export default function MiPaginaWebPage() {
 
                 {activeTab === 'calendar' && (
                   <div className="space-y-6">
-                    <h2 className="text-lg font-medium text-gray-900">Configuración del Calendario</h2>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-lg font-medium text-gray-900">Configuración del Calendario</h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Configura la duración y tiempo intermedio por defecto. Cada servicio puede tener configuración específica.
+                        </p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 max-w-sm">
+                        <div className="flex items-start space-x-3">
+                          <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h3 className="text-sm font-medium text-blue-900 mb-1">¿Cómo funciona?</h3>
+                            <div className="text-xs text-blue-700 space-y-1">
+                              <p>• El cliente ve solo los horarios disponibles</p>
+                              <p>• Automáticamente se bloquean los tiempos ocupados</p>
+                              <p>• En tu calendario aparecen ambos períodos por separado</p>
+                              <p>• Te da tiempo para preparar la siguiente consulta</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     
                     <div className="space-y-6">
                       {/* Mostrar calendario */}
@@ -813,7 +900,7 @@ export default function MiPaginaWebPage() {
                             </div>
                           </div>
 
-                          {/* Tiempo intermedio/buffer */}
+                          {/* Tiempo intermedio */}
                           <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-r from-orange-50 to-red-50">
                             <div className="flex items-center space-x-3 mb-4">
                               <Plus className="h-5 w-5 text-orange-600" />
@@ -840,13 +927,13 @@ export default function MiPaginaWebPage() {
                                       {buffer === 0 ? 'Sin' : buffer}
                                     </div>
                                     <div className="text-xs">
-                                      {buffer === 0 ? 'buffer' : 'min'}
+                                      {buffer === 0 ? 'tiempo' : 'min'}
                                     </div>
                                   </button>
                                 ))}
                               </div>
 
-                              {/* Buffer personalizado */}
+                              {/* Tiempo intermedio personalizado */}
                               <div className="pt-4 border-t border-orange-200">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Tiempo Personalizado
@@ -872,7 +959,7 @@ export default function MiPaginaWebPage() {
                                 </p>
                               </div>
 
-                              {/* Explicación del buffer */}
+                              {/* Explicación del tiempo intermedio */}
                               <div className="bg-white/50 rounded-lg p-4 border border-orange-200">
                                 <h4 className="text-sm font-medium text-orange-800 mb-2">
                                   ¿Cómo funciona el tiempo intermedio?
@@ -896,7 +983,7 @@ export default function MiPaginaWebPage() {
                             
                             <div className="text-sm text-gray-600 space-y-2">
                               <p>• <strong>Duración por cita:</strong> {landingPage.appointmentDuration} minutos</p>
-                              <p>• <strong>Tiempo intermedio:</strong> {landingPage.bufferTime} minutos {landingPage.bufferTime > 0 ? '(automático)' : '(sin buffer)'}</p>
+                              <p>• <strong>Tiempo intermedio:</strong> {landingPage.bufferTime} minutos {landingPage.bufferTime > 0 ? '(automático)' : '(sin tiempo intermedio)'}</p>
                               <p>• <strong>Total por slot:</strong> {landingPage.appointmentDuration + landingPage.bufferTime} minutos</p>
                               <p>• <strong>Lo que ve el cliente:</strong> Solo su cita de {landingPage.appointmentDuration} minutos</p>
                               <p>• <strong>Lo que ves tú:</strong> Cita principal + tiempo intermedio separado</p>

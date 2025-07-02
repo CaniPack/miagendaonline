@@ -30,6 +30,8 @@ interface Service {
   name: string;
   description: string;
   price: string;
+  duration?: number; // Duración específica del servicio en minutos (opcional)
+  bufferTime?: number; // Tiempo intermedio específico en minutos (opcional)
 }
 
 interface LandingPageData {
@@ -64,6 +66,7 @@ const colorSchemes = {
   green: { primary: '#16a34a', secondary: '#dcfce7', accent: '#15803d' },
   purple: { primary: '#9333ea', secondary: '#f3e8ff', accent: '#7c3aed' },
   orange: { primary: '#ea580c', secondary: '#fed7aa', accent: '#c2410c' },
+  pink: { primary: '#ec4899', secondary: '#fce7f3', accent: '#db2777' },
 };
 
 export default function LandingPage() {
@@ -86,6 +89,7 @@ export default function LandingPage() {
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
     fetchLandingPage();
@@ -96,6 +100,13 @@ export default function LandingPage() {
       fetchAvailableSlots();
     }
   }, [landingPage]);
+
+  // Refrescar slots cuando cambie el servicio seleccionado
+  useEffect(() => {
+    if (landingPage && landingPage.showCalendar && selectedService) {
+      fetchAvailableSlots();
+    }
+  }, [selectedService]);
 
   const fetchLandingPage = async () => {
     try {
@@ -126,7 +137,14 @@ export default function LandingPage() {
     
     setLoadingSlots(true);
     try {
-      const response = await fetch(`/api/calendar/available-slots?professionalId=${landingPage.user.clerkId}`);
+      let url = `/api/calendar/available-slots?professionalId=${landingPage.user.clerkId}`;
+      
+      // Agregar serviceId si hay un servicio seleccionado
+      if (selectedService?.id) {
+        url += `&serviceId=${selectedService.id}`;
+      }
+      
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setAvailableSlots(data.availableDays || []);
@@ -398,7 +416,10 @@ export default function LandingPage() {
                           {service.price}
                         </span>
                         <button
-                          onClick={() => setShowForm(true)}
+                          onClick={() => {
+                            setSelectedService(service);
+                            setShowForm(true);
+                          }}
                           className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
                           style={{ backgroundColor: colors.primary }}
                         >
@@ -480,12 +501,40 @@ export default function LandingPage() {
                   <h3 className="text-2xl font-bold text-gray-900">
                     Agendar con {landingPage.professionalName}
                   </h3>
-                  <p className="text-gray-600 mt-1">
-                    {landingPage.calendarDescription || 'Selecciona una fecha y hora disponible para agendar tu cita'}
-                  </p>
+                  {selectedService ? (
+                    <div className="mt-2">
+                      <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                        <span className="font-medium">{selectedService.name}</span>
+                        {selectedService.price && (
+                          <span className="ml-2 text-blue-600">{selectedService.price}</span>
+                        )}
+                        {(selectedService.duration || selectedService.bufferTime) && (
+                          <span className="ml-2 text-blue-600">
+                            ({selectedService.duration || 60} min)
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedService(null);
+                          fetchAvailableSlots(); // Refrescar con configuración general
+                        }}
+                        className="ml-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Cambiar servicio
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600 mt-1">
+                      {landingPage.calendarDescription || 'Selecciona una fecha y hora disponible para agendar tu cita'}
+                    </p>
+                  )}
                 </div>
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setSelectedService(null); // Limpiar servicio seleccionado al cerrar
+                  }}
                   className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-full transition-colors"
                 >
                   <X className="h-6 w-6" />

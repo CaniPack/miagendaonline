@@ -132,7 +132,7 @@ model LandingPage {
   showCalendar          Boolean  @default(true)
   calendarDescription   String?  // Texto descriptivo del calendario
   appointmentDuration   Int      @default(60)   // Duración por defecto de citas en minutos
-  bufferTime            Int      @default(0)    // Tiempo de buffer entre citas en minutos
+  bufferTime            Int      @default(0)    // Tiempo intermedio entre citas en minutos
   
   // Configuración del botón de agendar
   buttonText            String   @default("Agendar Hora")
