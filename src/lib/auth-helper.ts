@@ -1,86 +1,115 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 import { prisma } from './prisma';
 
-// Usuario simulado para desarrollo
-const mockUser = {
-  userId: 'user_dev_12345',
-  user: {
-    id: 'user_dev_12345',
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    emailAddresses: [{ emailAddress: 'juan.perez@ejemplo.com' }]
-  }
-};
-
+/**
+ * Get authenticated user information from Clerk
+ * Returns userId and user object if authenticated, null if not
+ */
 export async function getAuthUser() {
-  const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
-  
-  if (isDevelopment) {
-    // En modo desarrollo, crear/buscar usuario de desarrollo en la base de datos
-    console.log('🔧 Modo desarrollo - Buscando/creando usuario de desarrollo');
-    
-    try {
-      // Buscar si ya existe el usuario de desarrollo
-      let devUser = await prisma.user.findUnique({
-        where: { clerkId: 'dev-user-id' }
-      });
-      
-      // Si no existe, crearlo
-      if (!devUser) {
-        console.log('👤 Creando usuario de desarrollo en la base de datos');
-        devUser = await prisma.user.create({
-          data: {
-            clerkId: 'dev-user-id',
-            email: 'dev@example.com',
-            name: 'Usuario Desarrollo',
-            role: 'CLIENT'
-          }
-        });
-        console.log('✅ Usuario de desarrollo creado:', devUser.id);
-      } else {
-        console.log('✅ Usuario de desarrollo encontrado:', devUser.id);
-      }
-      
-      return {
-        userId: devUser.clerkId,
-        user: {
-          id: devUser.clerkId,
-          firstName: 'Usuario',
-          lastName: 'Desarrollo',
-          emailAddresses: [{ emailAddress: devUser.email }]
-        }
-      };
-    } catch (error) {
-      console.error('Error al manejar usuario de desarrollo:', error);
-      // Fallback si hay problemas con la base de datos
-      return {
-        userId: 'dev-user-id',
-        user: {
-          id: 'dev-user-id',
-          firstName: 'Usuario',
-          lastName: 'Desarrollo',
-          emailAddresses: [{ emailAddress: 'dev@example.com' }]
-        }
-      };
-    }
-  }
-  
-  // En modo producción, usar Clerk normalmente
   try {
-    return await auth();
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return { userId: null, user: null };
+    }
+
+    const user = await currentUser();
+    
+    return {
+      userId,
+      user: {
+        id: userId,
+        firstName: user?.firstName || null,
+        lastName: user?.lastName || null,
+        emailAddresses: user?.emailAddresses || []
+      }
+    };
   } catch (error) {
-    console.error('Error de autenticación:', error);
+    console.error('Error getting authenticated user:', error);
     return { userId: null, user: null };
   }
 }
 
-export function getCurrentUser(): string {
-  const isDevelopment = process.env.DEVELOPMENT_MODE === 'true';
-  
-  if (isDevelopment) {
-    return 'user_dev_12345';
-  } else {
-    // En producción, esto necesitaría llamar a auth() y extraer el userId
-    throw new Error('getCurrentUser en producción requiere implementación async');
+/**
+ * Get or create user in database
+ * This ensures the Clerk user exists in our local database
+ */
+export async function getOrCreateUser() {
+  try {
+    const { userId, user } = await getAuthUser();
+    
+    if (!userId || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Try to find existing user
+    let dbUser = await prisma.user.findUnique({
+      where: { clerkId: userId }
+    });
+
+    // Create user if doesn't exist
+    if (!dbUser) {
+      const primaryEmail = user.emailAddresses[0]?.emailAddress;
+      
+      if (!primaryEmail) {
+        throw new Error('User email not found');
+      }
+
+      dbUser = await prisma.user.create({
+        data: {
+          clerkId: userId,
+          email: primaryEmail,
+          name: user.firstName && user.lastName 
+            ? `${user.firstName} ${user.lastName}` 
+            : user.firstName || user.lastName || 'Usuario',
+          role: 'CLIENT' // Default role, can be changed later
+        }
+      });
+    }
+
+    return { userId, user, dbUser };
+  } catch (error) {
+    console.error('Error getting or creating user:', error);
+    throw error;
   }
-} 
+}
+
+/**
+ * Require authentication - throws error if not authenticated
+ */
+export async function requireAuth() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    throw new Error('Authentication required');
+  }
+  
+  return userId;
+}
+
+/**
+ * Helper function to handle errors in API routes
+ * Returns appropriate response for authentication vs server errors
+ */
+export function handleApiError(error: unknown, context: string = 'API') {
+  console.error(`Error in ${context}:`, error);
+  
+  // Check if it's an authentication error
+  if (error instanceof Error && 
+      (error.message === 'User not authenticated' || 
+       error.message === 'Authentication required')) {
+    return NextResponse.json(
+      { error: 'No autorizado', message: 'Debes iniciar sesión para acceder a esta función' },
+      { status: 401 }
+    );
+  }
+  
+  // Generic server error
+  return NextResponse.json(
+    { error: 'Error interno del servidor' },
+    { status: 500 }
+  );
+}
+
+ 

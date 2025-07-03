@@ -1,36 +1,31 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  CalendarIcon, 
-  UserIcon, 
-  PlusIcon, 
-  CreditCardIcon, 
-  BellIcon, 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  CalendarIcon,
+  PlusIcon,
   UsersIcon,
   HomeIcon,
   TrendingUpIcon,
-  SettingsIcon,
-  GlobeIcon
+  GlobeIcon,
 } from "lucide-react";
-import { UserButton } from '@clerk/nextjs';
-import { useAuthUser } from '@/hooks/useAuthUser';
-import NotificationBell from '@/components/NotificationBell';
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import NotificationBell from "@/components/NotificationBell";
 
 const navigationItems = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Calendario', href: '/calendario', icon: CalendarIcon },
-  { name: 'Citas', href: '/appointments', icon: PlusIcon },
-  { name: 'Clientes', href: '/clientes', icon: UsersIcon },
-  { name: 'Ingresos', href: '/ingresos', icon: TrendingUpIcon },
-  { name: 'Mi Página Web', href: '/mi-pagina-web', icon: GlobeIcon },
+  { name: "Dashboard", href: "/", icon: HomeIcon },
+  { name: "Calendario", href: "/calendario", icon: CalendarIcon },
+  { name: "Citas", href: "/appointments", icon: PlusIcon },
+  { name: "Clientes", href: "/clientes", icon: UsersIcon },
+  { name: "Ingresos", href: "/ingresos", icon: TrendingUpIcon },
+  { name: "Mi Página Web", href: "/mi-pagina-web", icon: GlobeIcon },
 ];
 
 export default function Navigation() {
   const { user, isLoaded } = useAuthUser();
   const pathname = usePathname();
-  const isDevelopment = process.env.NODE_ENV === 'development';
 
   if (!isLoaded) {
     return (
@@ -51,84 +46,103 @@ export default function Navigation() {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <CalendarIcon className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Mi Agenda Online</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Mi Agenda Online
+            </h1>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || 
-                (item.href !== '/' && pathname.startsWith(item.href));
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Navigation Links - Only show when signed in */}
+          <SignedIn>
+            <nav className="hidden md:flex items-center space-x-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-indigo-100 text-indigo-700"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </SignedIn>
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            <NotificationBell />
-            
-            {/* User Info */}
-            <div className="flex items-center space-x-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {user?.emailAddresses[0]?.emailAddress}
-                </p>
-              </div>
-              {isDevelopment ? (
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">JP</span>
+            <SignedIn>
+              <NotificationBell />
+
+              {/* User Info */}
+              <div className="flex items-center space-x-3">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user?.emailAddresses[0]?.emailAddress}
+                  </p>
                 </div>
-              ) : (
-                <UserButton afterSignOutUrl="/sign-in" />
-              )}
-            </div>
+                <UserButton
+                  afterSignOutUrl="/sign-in"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8",
+                    },
+                  }}
+                />
+              </div>
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                  Iniciar Sesión
+                </button>
+              </SignInButton>
+            </SignedOut>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden border-t border-gray-200 pt-4 pb-3">
-          <div className="flex flex-wrap gap-2">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || 
-                (item.href !== '/' && pathname.startsWith(item.href));
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
+        {/* Mobile Navigation - Only show when signed in */}
+        <SignedIn>
+          <div className="md:hidden border-t border-gray-200 pt-4 pb-3">
+            <div className="flex flex-wrap gap-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-indigo-100 text-indigo-700"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </SignedIn>
       </div>
     </header>
   );
-} 
+}

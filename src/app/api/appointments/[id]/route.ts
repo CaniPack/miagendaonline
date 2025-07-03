@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-helper';
+import { getOrCreateUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
 // GET - Obtener una cita específica
@@ -8,11 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const appointment = await prisma.appointment.findUnique({
       where: { id: params.id },
@@ -33,7 +29,7 @@ export async function GET(
     }
 
     // Verificar que la cita pertenece al usuario actual
-    if (appointment.userId !== userId) {
+    if (appointment.userId !== dbUser.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -44,20 +40,16 @@ export async function GET(
   }
 }
 
-// PUT - Actualizar una cita
+// PUT - Actualizar una cita específica
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
-    const { customerId, date, duration, notes, status } = body;
+    const { date, duration, status, notes, internalComment, internalPrice, publicPrice } = body;
 
     // Verificar que la cita existe y pertenece al usuario
     const existingAppointment = await prisma.appointment.findUnique({
@@ -68,19 +60,20 @@ export async function PUT(
       return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
     }
 
-    if (existingAppointment.userId !== userId) {
+    if (existingAppointment.userId !== dbUser.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    // Actualizar la cita
-    const updatedAppointment = await prisma.appointment.update({
+    const appointment = await prisma.appointment.update({
       where: { id: params.id },
       data: {
-        customerId,
-        date: new Date(date),
-        duration,
-        notes,
-        status,
+        ...(date && { date: new Date(date) }),
+        ...(duration && { duration }),
+        ...(status && { status }),
+        ...(notes !== undefined && { notes }),
+        ...(internalComment !== undefined && { internalComment }),
+        ...(internalPrice !== undefined && { internalPrice }),
+        ...(publicPrice !== undefined && { publicPrice }),
         updatedAt: new Date(),
       },
       include: {
@@ -95,24 +88,20 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedAppointment);
+    return NextResponse.json(appointment);
   } catch (error) {
     console.error('Error al actualizar cita:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
-// DELETE - Eliminar una cita
+// DELETE - Eliminar una cita específica
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     // Verificar que la cita existe y pertenece al usuario
     const existingAppointment = await prisma.appointment.findUnique({
@@ -123,11 +112,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
     }
 
-    if (existingAppointment.userId !== userId) {
+    if (existingAppointment.userId !== dbUser.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    // Eliminar la cita
     await prisma.appointment.delete({
       where: { id: params.id },
     });

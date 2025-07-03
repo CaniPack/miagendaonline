@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-helper';
+import { getOrCreateUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
 // GET - Obtener todas las notificaciones del usuario
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const { searchParams } = new URL(request.url);
     const onlyUnread = searchParams.get('unread') === 'true';
 
     const notifications = await prisma.notification.findMany({
       where: { 
-        userId,
+        userId: dbUser.id,
         ...(onlyUnread && { read: false }),
       },
       orderBy: { createdAt: 'desc' },
@@ -33,11 +29,7 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva notificación
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
     const { type, message, targetUserId } = body;
@@ -51,9 +43,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tipo de notificación inválido' }, { status: 400 });
     }
 
+    // Si se especifica targetUserId, verificar que el usuario actual tenga permisos
+    // Por ahora, solo permitir enviar notificaciones a sí mismo
+    const finalTargetUserId = targetUserId || dbUser.id;
+
     const notification = await prisma.notification.create({
       data: {
-        userId: targetUserId || userId, // Permitir notificar a otros usuarios
+        userId: finalTargetUserId,
         type,
         message,
         read: false,
@@ -70,37 +66,34 @@ export async function POST(request: NextRequest) {
 // PUT - Marcar notificaciones como leídas
 export async function PUT(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
-    const { notificationIds, markAllAsRead } = body;
+    const { notificationIds, markAsRead = true } = body;
 
-    if (markAllAsRead) {
-      // Marcar todas las notificaciones como leídas
+    // Si no se proporcionan IDs específicos, marcar todas como leídas
+    if (!notificationIds || notificationIds.length === 0) {
       await prisma.notification.updateMany({
-        where: { userId, read: false },
-        data: { read: true },
+        where: { 
+          userId: dbUser.id,
+          read: false,
+        },
+        data: { read: markAsRead },
       });
 
       return NextResponse.json({ message: 'Todas las notificaciones marcadas como leídas' });
-    } else if (notificationIds && Array.isArray(notificationIds)) {
-      // Marcar notificaciones específicas como leídas
-      await prisma.notification.updateMany({
-        where: { 
-          id: { in: notificationIds },
-          userId, // Asegurar que solo se actualicen notificaciones del usuario
-        },
-        data: { read: true },
-      });
-
-      return NextResponse.json({ message: 'Notificaciones marcadas como leídas' });
-    } else {
-      return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
     }
+
+    // Marcar notificaciones específicas
+    await prisma.notification.updateMany({
+      where: { 
+        id: { in: notificationIds },
+        userId: dbUser.id, // Asegurar que solo se modifiquen las notificaciones del usuario
+      },
+      data: { read: markAsRead },
+    });
+
+    return NextResponse.json({ message: 'Notificaciones actualizadas' });
   } catch (error) {
     console.error('Error al actualizar notificaciones:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });

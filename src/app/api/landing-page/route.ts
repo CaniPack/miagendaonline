@@ -1,30 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth-helper';
+import { getOrCreateUser } from '@/lib/auth-helper';
 
 // GET - Obtener landing page del usuario
 export async function GET() {
   try {
-    const userId = getCurrentUser();
-
-    // En desarrollo, asegurar que el usuario existe
-    if (process.env.DEVELOPMENT_MODE === 'true') {
-      await prisma.user.upsert({
-        where: { id: userId },
-        update: {},
-        create: {
-          id: userId,
-          email: 'juan.perez@ejemplo.com',
-          name: 'Juan Pérez',
-          phone: '+56912345678',
-          role: 'ADMIN',
-          clerkId: userId,
-        },
-      });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const landingPage = await prisma.landingPage.findUnique({
-      where: { userId },
+      where: { userId: dbUser.id },
     });
 
     return NextResponse.json(landingPage);
@@ -40,24 +24,8 @@ export async function GET() {
 // POST/PUT - Crear o actualizar landing page
 export async function POST(request: NextRequest) {
   try {
-    const userId = getCurrentUser();
+    const { dbUser } = await getOrCreateUser();
     const data = await request.json();
-
-    // En desarrollo, asegurar que el usuario existe
-    if (process.env.DEVELOPMENT_MODE === 'true') {
-      await prisma.user.upsert({
-        where: { id: userId },
-        update: {},
-        create: {
-          id: userId,
-          email: 'juan.perez@ejemplo.com',
-          name: 'Juan Pérez',
-          phone: '+56912345678',
-          role: 'ADMIN',
-          clerkId: userId,
-        },
-      });
-    }
 
     // Generar slug único basado en el nombre profesional
     const slug = data.professionalName
@@ -76,7 +44,7 @@ export async function POST(request: NextRequest) {
       const existing = await prisma.landingPage.findUnique({
         where: { 
           slug: finalSlug,
-          NOT: { userId } // Excluir la landing page del usuario actual
+          NOT: { userId: dbUser.id } // Excluir la landing page del usuario actual
         },
       });
       if (!existing) break;
@@ -85,14 +53,14 @@ export async function POST(request: NextRequest) {
     }
 
     const landingPage = await prisma.landingPage.upsert({
-      where: { userId },
+      where: { userId: dbUser.id },
       update: {
         ...data,
         slug: finalSlug,
       },
       create: {
         ...data,
-        userId,
+        userId: dbUser.id,
         slug: finalSlug,
       },
     });

@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { getAuthUser } from '@/lib/auth-helper';
+import { requireAuth } from '@/lib/auth-helper';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('📤 Iniciando upload de imagen...');
     
-    const { userId } = await getAuthUser();
+    const userId = await requireAuth();
     console.log('🔐 Usuario autenticado:', userId);
-    
-    if (!userId) {
-      console.log('❌ Usuario no autenticado');
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
 
     const data = await request.formData();
     const file: File | null = data.get('file') as unknown as File;
@@ -52,42 +47,42 @@ export async function POST(request: NextRequest) {
     try {
       await mkdir(uploadDir, { recursive: true });
       console.log('✅ Directorio creado/verificado');
-    } catch (error) {
+    } catch {
       console.log('ℹ️ El directorio ya existe');
     }
 
     // Generar nombre único para el archivo
     const timestamp = Date.now();
-    const extension = path.extname(file.name);
-    const filename = `${userId}_${timestamp}${extension}`;
-    const filepath = path.join(uploadDir, filename);
+    const fileExtension = path.extname(file.name);
+    const fileName = `${userId}_${timestamp}${fileExtension}`;
+    const filePath = path.join(uploadDir, fileName);
     
-    console.log('📝 Nombre del archivo:', filename);
-    console.log('📍 Ruta completa:', filepath);
+    console.log('💾 Guardando archivo como:', fileName);
 
-    // Guardar archivo
-    await writeFile(filepath, buffer);
+    // Escribir archivo
+    await writeFile(filePath, buffer);
     console.log('✅ Archivo guardado exitosamente');
 
-    // Retornar URL pública
-    const publicUrl = `/uploads/profiles/${filename}`;
-    console.log('🌐 URL pública:', publicUrl);
+    // Generar URL pública
+    const publicUrl = `/uploads/profiles/${fileName}`;
+    console.log('🌐 URL pública generada:', publicUrl);
 
     return NextResponse.json({ 
       success: true, 
-      url: publicUrl 
+      url: publicUrl,
+      filename: fileName 
     });
 
   } catch (error) {
-    console.error('💥 Error al subir imagen:', error);
-    console.error('📊 Detalles del error:', {
-      message: error instanceof Error ? error.message : 'Error desconocido',
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error('❌ Error en upload:', error);
     
-    return NextResponse.json(
-      { error: `Error interno del servidor: ${error instanceof Error ? error.message : 'Error desconocido'}` },
-      { status: 500 }
-    );
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    
+    return NextResponse.json({ 
+      error: 'Error interno del servidor',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
   }
 } 

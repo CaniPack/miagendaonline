@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuthUser } from '@/hooks/useAuthUser';
-import { 
-  Globe, 
-  Eye, 
-  Save, 
-  Palette, 
-  Layout, 
-  Phone, 
-  Instagram, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import {
+  Globe,
+  Save,
+  Palette,
+  Layout,
+  Phone,
+  Instagram,
   Mail,
   Plus,
   Trash2,
@@ -20,12 +20,10 @@ import {
   Calendar,
   Briefcase,
   DollarSign,
-  Image,
   Clock,
   ArrowLeft,
-  Home
-} from 'lucide-react';
-import { useToast } from '@/components/ToastProvider';
+} from "lucide-react";
+import { useToast } from "@/components/ToastProvider";
 
 interface FormField {
   name: string;
@@ -40,7 +38,7 @@ interface Service {
   description: string;
   price: string;
   duration?: number; // Duración específica del servicio en minutos (opcional)
-      bufferTime?: number; // Tiempo intermedio específico en minutos (opcional)
+  bufferTime?: number; // Tiempo intermedio específico en minutos (opcional)
 }
 
 interface LandingPageData {
@@ -69,52 +67,80 @@ interface LandingPageData {
 }
 
 const defaultFormFields: FormField[] = [
-  { name: 'name', label: 'Nombre', type: 'text', required: true },
-  { name: 'lastName', label: 'Apellido', type: 'text', required: true },
-  { name: 'email', label: 'Correo', type: 'email', required: true },
-  { name: 'comment', label: 'Comentario', type: 'textarea', required: false },
+  { name: "name", label: "Nombre", type: "text", required: true },
+  { name: "lastName", label: "Apellido", type: "text", required: true },
+  { name: "email", label: "Correo", type: "email", required: true },
+  { name: "comment", label: "Comentario", type: "textarea", required: false },
 ];
 
 const availableFields = [
-  { name: 'phone', label: 'Teléfono', type: 'tel' },
-  { name: 'age', label: 'Edad', type: 'number' },
-  { name: 'reason', label: 'Motivo de consulta', type: 'textarea' },
-  { name: 'previousExperience', label: 'Experiencia previa', type: 'textarea' },
-  { name: 'referral', label: '¿Cómo nos conociste?', type: 'text' },
+  { name: "phone", label: "Teléfono", type: "tel" },
+  { name: "age", label: "Edad", type: "number" },
+  { name: "reason", label: "Motivo de consulta", type: "textarea" },
+  { name: "previousExperience", label: "Experiencia previa", type: "textarea" },
+  { name: "referral", label: "¿Cómo nos conociste?", type: "text" },
 ];
 
 const colorSchemes = [
-  { id: 'blue', name: 'Azul Profesional', primary: '#2563eb', secondary: '#dbeafe' },
-  { id: 'green', name: 'Verde Natural', primary: '#16a34a', secondary: '#dcfce7' },
-  { id: 'purple', name: 'Morado Elegante', primary: '#9333ea', secondary: '#f3e8ff' },
-  { id: 'orange', name: 'Naranja Energético', primary: '#ea580c', secondary: '#fed7aa' },
-  { id: 'pink', name: 'Rosa Sofisticado', primary: '#ec4899', secondary: '#fce7f3' },
+  {
+    id: "blue",
+    name: "Azul Profesional",
+    primary: "#2563eb",
+    secondary: "#dbeafe",
+  },
+  {
+    id: "green",
+    name: "Verde Natural",
+    primary: "#16a34a",
+    secondary: "#dcfce7",
+  },
+  {
+    id: "purple",
+    name: "Morado Elegante",
+    primary: "#9333ea",
+    secondary: "#f3e8ff",
+  },
+  {
+    id: "orange",
+    name: "Naranja Energético",
+    primary: "#ea580c",
+    secondary: "#fed7aa",
+  },
+  {
+    id: "pink",
+    name: "Rosa Sofisticado",
+    primary: "#ec4899",
+    secondary: "#fce7f3",
+  },
 ];
 
 export default function MiPaginaWebPage() {
   const { user } = useAuthUser();
   const { showSuccess, showError } = useToast();
   const [landingPage, setLandingPage] = useState<LandingPageData>({
-    professionalName: user?.firstName + ' ' + user?.lastName || '',
-    title: '',
-    tagline: '',
-    description: '',
+    professionalName: user?.firstName + " " + user?.lastName || "",
+    title: "",
+    tagline: "",
+    description: "",
     services: [],
     showCalendar: true,
-    calendarDescription: 'Selecciona una fecha y hora disponible para agendar tu cita',
+    calendarDescription:
+      "Selecciona una fecha y hora disponible para agendar tu cita",
     appointmentDuration: 60,
     bufferTime: 0,
-    buttonText: 'Agendar Hora',
+    buttonText: "Agendar Hora",
     requirePayment: false,
     formFields: defaultFormFields,
-    colorScheme: 'blue',
-    slug: '',
+    colorScheme: "blue",
+    slug: "",
     isPublished: false,
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'services' | 'calendar' | 'form' | 'contact' | 'design'>('info');
+  const [activeTab, setActiveTab] = useState<
+    "info" | "services" | "calendar" | "form" | "contact" | "design"
+  >("info");
 
   useEffect(() => {
     fetchLandingPage();
@@ -122,7 +148,7 @@ export default function MiPaginaWebPage() {
 
   const fetchLandingPage = async () => {
     try {
-      const response = await fetch('/api/landing-page');
+      const response = await fetch("/api/landing-page");
       if (response.ok) {
         const data = await response.json();
         if (data) {
@@ -131,15 +157,17 @@ export default function MiPaginaWebPage() {
           try {
             parsedServices = data.services ? JSON.parse(data.services) : [];
           } catch (e) {
-            console.error('Error parsing services:', e);
+            console.error("Error parsing services:", e);
             parsedServices = [];
           }
 
           let parsedFormFields = defaultFormFields;
           try {
-            parsedFormFields = data.formFields ? JSON.parse(data.formFields) : defaultFormFields;
+            parsedFormFields = data.formFields
+              ? JSON.parse(data.formFields)
+              : defaultFormFields;
           } catch (e) {
-            console.error('Error parsing formFields:', e);
+            console.error("Error parsing formFields:", e);
             parsedFormFields = defaultFormFields;
           }
 
@@ -151,7 +179,7 @@ export default function MiPaginaWebPage() {
         }
       }
     } catch (error) {
-      console.error('Error al cargar landing page:', error);
+      console.error("Error al cargar landing page:", error);
     } finally {
       setLoading(false);
     }
@@ -162,72 +190,94 @@ export default function MiPaginaWebPage() {
     try {
       const dataToSave = {
         ...landingPage,
-        formFields: JSON.stringify(Array.isArray(landingPage.formFields) ? landingPage.formFields : defaultFormFields),
-        services: JSON.stringify(Array.isArray(landingPage.services) ? landingPage.services : []),
+        formFields: JSON.stringify(
+          Array.isArray(landingPage.formFields)
+            ? landingPage.formFields
+            : defaultFormFields
+        ),
+        services: JSON.stringify(
+          Array.isArray(landingPage.services) ? landingPage.services : []
+        ),
       };
 
-      const response = await fetch('/api/landing-page', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/landing-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSave),
       });
 
       if (response.ok) {
         const updated = await response.json();
-        
+
         // Parsear los campos JSON de manera segura
         let parsedFormFields = defaultFormFields;
         let parsedServices = [];
-        
+
         try {
-          parsedFormFields = updated.formFields ? JSON.parse(updated.formFields) : defaultFormFields;
+          parsedFormFields = updated.formFields
+            ? JSON.parse(updated.formFields)
+            : defaultFormFields;
         } catch (e) {
-          console.error('Error parsing saved formFields:', e);
+          console.error("Error parsing saved formFields:", e);
         }
-        
+
         try {
           parsedServices = updated.services ? JSON.parse(updated.services) : [];
         } catch (e) {
-          console.error('Error parsing saved services:', e);
+          console.error("Error parsing saved services:", e);
         }
-        
+
         setLandingPage({
           ...updated,
-          formFields: Array.isArray(parsedFormFields) ? parsedFormFields : defaultFormFields,
+          formFields: Array.isArray(parsedFormFields)
+            ? parsedFormFields
+            : defaultFormFields,
           services: Array.isArray(parsedServices) ? parsedServices : [],
         });
-        showSuccess('¡Landing page guardada!', 'Los cambios se han guardado exitosamente');
+        showSuccess(
+          "¡Landing page guardada!",
+          "Los cambios se han guardado exitosamente"
+        );
       } else {
-        showError('Error al guardar', 'No se pudieron guardar los cambios');
+        showError("Error al guardar", "No se pudieron guardar los cambios");
       }
     } catch (error) {
-      console.error('Error al guardar:', error);
-      showError('Error al guardar', 'Ocurrió un error inesperado');
+      console.error("Error al guardar:", error);
+      showError("Error al guardar", "Ocurrió un error inesperado");
     } finally {
       setSaving(false);
     }
   };
 
-  const addFormField = (field: typeof availableFields[0]) => {
-    setLandingPage(prev => ({
+  const addFormField = (field: (typeof availableFields)[0]) => {
+    setLandingPage((prev) => ({
       ...prev,
-      formFields: [...(Array.isArray(prev.formFields) ? prev.formFields : defaultFormFields), { ...field, required: false }]
+      formFields: [
+        ...(Array.isArray(prev.formFields)
+          ? prev.formFields
+          : defaultFormFields),
+        { ...field, required: false },
+      ],
     }));
   };
 
   const removeFormField = (index: number) => {
-    setLandingPage(prev => ({
+    setLandingPage((prev) => ({
       ...prev,
-      formFields: (Array.isArray(prev.formFields) ? prev.formFields : defaultFormFields).filter((_, i) => i !== index)
+      formFields: (Array.isArray(prev.formFields)
+        ? prev.formFields
+        : defaultFormFields
+      ).filter((_, i) => i !== index),
     }));
   };
 
   const updateFormField = (index: number, updates: Partial<FormField>) => {
-    setLandingPage(prev => ({
+    setLandingPage((prev) => ({
       ...prev,
-      formFields: (Array.isArray(prev.formFields) ? prev.formFields : defaultFormFields).map((field, i) => 
-        i === index ? { ...field, ...updates } : field
-      )
+      formFields: (Array.isArray(prev.formFields)
+        ? prev.formFields
+        : defaultFormFields
+      ).map((field, i) => (i === index ? { ...field, ...updates } : field)),
     }));
   };
 
@@ -235,29 +285,34 @@ export default function MiPaginaWebPage() {
   const addService = () => {
     const newService: Service = {
       id: Date.now().toString(),
-      name: '',
-      description: '',
-      price: ''
+      name: "",
+      description: "",
+      price: "",
     };
-    setLandingPage(prev => ({
+    setLandingPage((prev) => ({
       ...prev,
-      services: [...(Array.isArray(prev.services) ? prev.services : []), newService]
+      services: [
+        ...(Array.isArray(prev.services) ? prev.services : []),
+        newService,
+      ],
     }));
   };
 
   const removeService = (id: string) => {
-    setLandingPage(prev => ({
+    setLandingPage((prev) => ({
       ...prev,
-      services: (Array.isArray(prev.services) ? prev.services : []).filter(service => service.id !== id)
+      services: (Array.isArray(prev.services) ? prev.services : []).filter(
+        (service) => service.id !== id
+      ),
     }));
   };
 
   const updateService = (id: string, updates: Partial<Service>) => {
-    setLandingPage(prev => ({
+    setLandingPage((prev) => ({
       ...prev,
-      services: (Array.isArray(prev.services) ? prev.services : []).map(service => 
-        service.id === id ? { ...service, ...updates } : service
-      )
+      services: (Array.isArray(prev.services) ? prev.services : []).map(
+        (service) => (service.id === id ? { ...service, ...updates } : service)
+      ),
     }));
   };
 
@@ -265,61 +320,74 @@ export default function MiPaginaWebPage() {
   const handleImageUpload = async (file: File) => {
     // Validaciones del lado del cliente
     if (!file) {
-      showError('Archivo requerido', 'Por favor selecciona un archivo');
+      showError("Archivo requerido", "Por favor selecciona un archivo");
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      showError('Tipo de archivo no válido', 'Solo se permiten archivos de imagen (JPG, PNG, GIF)');
+    if (!file.type.startsWith("image/")) {
+      showError(
+        "Tipo de archivo no válido",
+        "Solo se permiten archivos de imagen (JPG, PNG, GIF)"
+      );
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      showError('Archivo muy grande', 'La imagen no puede exceder 5MB');
+      showError("Archivo muy grande", "La imagen no puede exceder 5MB");
       return;
     }
 
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     try {
-      console.log('Subiendo imagen...', {
+      console.log("Subiendo imagen...", {
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
       });
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
-      
-      console.log('Respuesta del servidor:', response.status, response.statusText);
-      
+
+      console.log(
+        "Respuesta del servidor:",
+        response.status,
+        response.statusText
+      );
+
       if (response.ok) {
         const result = await response.json();
-        console.log('Resultado:', result);
-        
-        setLandingPage(prev => ({
+        console.log("Resultado:", result);
+
+        setLandingPage((prev) => ({
           ...prev,
-          profileImage: result.url
+          profileImage: result.url,
         }));
-        showSuccess('¡Imagen subida!', 'La foto de perfil se ha subido exitosamente');
+        showSuccess(
+          "¡Imagen subida!",
+          "La foto de perfil se ha subido exitosamente"
+        );
       } else {
         // Obtener el mensaje de error específico del servidor
-        let errorMessage = 'Error desconocido';
+        let errorMessage = "Error desconocido";
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
-        console.error('Error del servidor:', errorMessage);
-        showError('Error al subir imagen', errorMessage);
+        console.error("Error del servidor:", errorMessage);
+        showError("Error al subir imagen", errorMessage);
       }
     } catch (error) {
-      console.error('Error de red al subir imagen:', error);
-      showError('Error de conexión', error instanceof Error ? error.message : 'Error desconocido');
+      console.error("Error de red al subir imagen:", error);
+      showError(
+        "Error de conexión",
+        error instanceof Error ? error.message : "Error desconocido"
+      );
     }
   };
 
@@ -349,25 +417,29 @@ export default function MiPaginaWebPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               {/* Botón para volver al dashboard */}
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver al Dashboard
-              </a>
-              
+              </Link>
+
               <div className="h-6 w-px bg-gray-300"></div>
-              
+
               <div className="flex items-center space-x-3">
                 <Globe className="h-6 w-6 text-blue-600" />
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Mi Página Web</h1>
-                  <p className="text-sm text-gray-500">Configura tu landing page profesional</p>
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    Mi Página Web
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    Configura tu landing page profesional
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               {getPreviewUrl() && (
                 <a
@@ -380,14 +452,14 @@ export default function MiPaginaWebPage() {
                   Ver página
                 </a>
               )}
-              
+
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Guardando...' : 'Guardar'}
+                {saving ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
@@ -400,23 +472,23 @@ export default function MiPaginaWebPage() {
           <div className="lg:col-span-1">
             <nav className="space-y-1">
               <button
-                onClick={() => setActiveTab('info')}
+                onClick={() => setActiveTab("info")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'info'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "info"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Layout className="h-4 w-4 mr-3" />
                 Información Básica
               </button>
-              
+
               <button
-                onClick={() => setActiveTab('services')}
+                onClick={() => setActiveTab("services")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'services'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "services"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Briefcase className="h-4 w-4 mr-3" />
@@ -424,47 +496,47 @@ export default function MiPaginaWebPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab('calendar')}
+                onClick={() => setActiveTab("calendar")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'calendar'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "calendar"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Calendar className="h-4 w-4 mr-3" />
                 Calendario
               </button>
-              
+
               <button
-                onClick={() => setActiveTab('form')}
+                onClick={() => setActiveTab("form")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'form'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "form"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Settings className="h-4 w-4 mr-3" />
                 Formulario de Contacto
               </button>
-              
+
               <button
-                onClick={() => setActiveTab('contact')}
+                onClick={() => setActiveTab("contact")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'contact'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "contact"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Phone className="h-4 w-4 mr-3" />
                 Datos de Contacto
               </button>
-              
+
               <button
-                onClick={() => setActiveTab('design')}
+                onClick={() => setActiveTab("design")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'design'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === "design"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Palette className="h-4 w-4 mr-3" />
@@ -477,13 +549,17 @@ export default function MiPaginaWebPage() {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg shadow-sm">
               <div className="p-6">
-                {activeTab === 'info' && (
+                {activeTab === "info" && (
                   <div className="space-y-6">
-                    <h2 className="text-lg font-medium text-gray-900">Información Básica</h2>
-                    
+                    <h2 className="text-lg font-medium text-gray-900">
+                      Información Básica
+                    </h2>
+
                     {/* Foto de Perfil */}
                     <div className="border-b pb-6">
-                      <h3 className="text-md font-medium text-gray-900 mb-4">Foto de Perfil</h3>
+                      <h3 className="text-md font-medium text-gray-900 mb-4">
+                        Foto de Perfil
+                      </h3>
                       <div className="flex items-center space-x-6">
                         <div className="shrink-0">
                           {landingPage.profileImage ? (
@@ -502,7 +578,9 @@ export default function MiPaginaWebPage() {
                           <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                             <span className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md text-sm">
                               <Upload className="h-4 w-4 mr-2" />
-                              {landingPage.profileImage ? 'Cambiar foto' : 'Subir foto'}
+                              {landingPage.profileImage
+                                ? "Cambiar foto"
+                                : "Subir foto"}
                             </span>
                             <input
                               type="file"
@@ -521,7 +599,12 @@ export default function MiPaginaWebPage() {
                           </p>
                           {landingPage.profileImage && (
                             <button
-                              onClick={() => setLandingPage(prev => ({ ...prev, profileImage: undefined }))}
+                              onClick={() =>
+                                setLandingPage((prev) => ({
+                                  ...prev,
+                                  profileImage: undefined,
+                                }))
+                              }
                               className="mt-2 text-xs text-red-600 hover:text-red-500"
                             >
                               Eliminar foto
@@ -530,7 +613,7 @@ export default function MiPaginaWebPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -539,12 +622,17 @@ export default function MiPaginaWebPage() {
                         <input
                           type="text"
                           value={landingPage.professionalName}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, professionalName: e.target.value }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              professionalName: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="Ej: Dr. Juan Pérez"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Título/Especialidad *
@@ -552,13 +640,18 @@ export default function MiPaginaWebPage() {
                         <input
                           type="text"
                           value={landingPage.title}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, title: e.target.value }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              title: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="Ej: Nutricionista Clínico"
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Frase de Valor *
@@ -566,12 +659,17 @@ export default function MiPaginaWebPage() {
                       <input
                         type="text"
                         value={landingPage.tagline}
-                        onChange={(e) => setLandingPage(prev => ({ ...prev, tagline: e.target.value }))}
+                        onChange={(e) =>
+                          setLandingPage((prev) => ({
+                            ...prev,
+                            tagline: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                         placeholder="Ej: Transformo tu relación con la comida de manera saludable y sostenible"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Descripción de Servicios *
@@ -579,12 +677,17 @@ export default function MiPaginaWebPage() {
                       <textarea
                         rows={4}
                         value={landingPage.description}
-                        onChange={(e) => setLandingPage(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setLandingPage((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                         placeholder="Describe brevemente tus servicios y cómo ayudas a tus clientes..."
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -593,21 +696,34 @@ export default function MiPaginaWebPage() {
                         <input
                           type="text"
                           value={landingPage.buttonText}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, buttonText: e.target.value }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              buttonText: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="Ej: Reservar Consulta"
                         />
                       </div>
-                      
+
                       <div className="flex items-center">
                         <input
                           type="checkbox"
                           id="requirePayment"
                           checked={landingPage.requirePayment}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, requirePayment: e.target.checked }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              requirePayment: e.target.checked,
+                            }))
+                          }
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="requirePayment" className="ml-3 text-sm text-gray-700">
+                        <label
+                          htmlFor="requirePayment"
+                          className="ml-3 text-sm text-gray-700"
+                        >
                           Requiere pago antes de agendar
                         </label>
                       </div>
@@ -619,14 +735,22 @@ export default function MiPaginaWebPage() {
                           type="checkbox"
                           id="isPublished"
                           checked={landingPage.isPublished}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, isPublished: e.target.checked }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              isPublished: e.target.checked,
+                            }))
+                          }
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="isPublished" className="ml-3 text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="isPublished"
+                          className="ml-3 text-sm font-medium text-gray-700"
+                        >
                           Página publicada (visible públicamente)
                         </label>
                       </div>
-                      
+
                       {landingPage.slug && (
                         <div className="text-sm text-gray-500">
                           URL: /p/{landingPage.slug}
@@ -636,10 +760,12 @@ export default function MiPaginaWebPage() {
                   </div>
                 )}
 
-                {activeTab === 'services' && (
+                {activeTab === "services" && (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-medium text-gray-900">Servicios</h2>
+                      <h2 className="text-lg font-medium text-gray-900">
+                        Servicios
+                      </h2>
                       <button
                         onClick={addService}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -648,11 +774,14 @@ export default function MiPaginaWebPage() {
                         Agregar Servicio
                       </button>
                     </div>
-                    
-                    {(!Array.isArray(landingPage.services) || landingPage.services.length === 0) ? (
+
+                    {!Array.isArray(landingPage.services) ||
+                    landingPage.services.length === 0 ? (
                       <div className="text-center py-12">
                         <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No hay servicios</h3>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">
+                          No hay servicios
+                        </h3>
                         <p className="mt-1 text-sm text-gray-500">
                           Agrega tus servicios para mostrarlos en tu página
                         </p>
@@ -668,8 +797,14 @@ export default function MiPaginaWebPage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {(Array.isArray(landingPage.services) ? landingPage.services : []).map((service) => (
-                          <div key={service.id} className="border border-gray-200 rounded-lg p-6">
+                        {(Array.isArray(landingPage.services)
+                          ? landingPage.services
+                          : []
+                        ).map((service) => (
+                          <div
+                            key={service.id}
+                            className="border border-gray-200 rounded-lg p-6"
+                          >
                             <div className="flex justify-between items-start mb-4">
                               <div className="flex-1 space-y-4">
                                 <div>
@@ -679,12 +814,16 @@ export default function MiPaginaWebPage() {
                                   <input
                                     type="text"
                                     value={service.name}
-                                    onChange={(e) => updateService(service.id, { name: e.target.value })}
+                                    onChange={(e) =>
+                                      updateService(service.id, {
+                                        name: e.target.value,
+                                      })
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                                     placeholder="Ej: Consulta Nutricional"
                                   />
                                 </div>
-                                
+
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Descripción del Servicio *
@@ -692,12 +831,16 @@ export default function MiPaginaWebPage() {
                                   <textarea
                                     rows={3}
                                     value={service.description}
-                                    onChange={(e) => updateService(service.id, { description: e.target.value })}
+                                    onChange={(e) =>
+                                      updateService(service.id, {
+                                        description: e.target.value,
+                                      })
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                                     placeholder="Describe qué incluye este servicio, beneficios, duración, etc."
                                   />
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -705,26 +848,38 @@ export default function MiPaginaWebPage() {
                                       Precio (solo números)
                                     </label>
                                     <div className="relative">
-                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                        $
+                                      </span>
                                       <input
                                         type="number"
                                         min="0"
                                         step="100"
-                                        value={service.price.replace(/[^0-9]/g, '')}
+                                        value={service.price.replace(
+                                          /[^0-9]/g,
+                                          ""
+                                        )}
                                         onChange={(e) => {
                                           const numericValue = e.target.value;
-                                          const formattedPrice = numericValue ? `$${parseInt(numericValue).toLocaleString('es-CL')}` : '';
-                                          updateService(service.id, { price: formattedPrice });
+                                          const formattedPrice = numericValue
+                                            ? `$${parseInt(
+                                                numericValue
+                                              ).toLocaleString("es-CL")}`
+                                            : "";
+                                          updateService(service.id, {
+                                            price: formattedPrice,
+                                          });
                                         }}
                                         className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                                         placeholder="50000"
                                       />
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">
-                                      Solo números. Se formateará automáticamente (ej: $50.000)
+                                      Solo números. Se formateará
+                                      automáticamente (ej: $50.000)
                                     </p>
                                   </div>
-                                  
+
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                       <Clock className="h-4 w-4 inline mr-1" />
@@ -735,19 +890,22 @@ export default function MiPaginaWebPage() {
                                       min="5"
                                       max="240"
                                       step="5"
-                                      value={service.duration || ''}
+                                      value={service.duration || ""}
                                       onChange={(e) => {
-                                        const duration = e.target.value ? parseInt(e.target.value) : undefined;
+                                        const duration = e.target.value
+                                          ? parseInt(e.target.value)
+                                          : undefined;
                                         updateService(service.id, { duration });
                                       }}
                                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                                       placeholder={landingPage.appointmentDuration.toString()}
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                      Opcional. Si vacío, usa duración general ({landingPage.appointmentDuration} min)
+                                      Opcional. Si vacío, usa duración general (
+                                      {landingPage.appointmentDuration} min)
                                     </p>
                                   </div>
-                                  
+
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                       <Plus className="h-4 w-4 inline mr-1" />
@@ -758,21 +916,26 @@ export default function MiPaginaWebPage() {
                                       min="0"
                                       max="60"
                                       step="5"
-                                      value={service.bufferTime || ''}
+                                      value={service.bufferTime || ""}
                                       onChange={(e) => {
-                                        const bufferTime = e.target.value ? parseInt(e.target.value) : undefined;
-                                        updateService(service.id, { bufferTime });
+                                        const bufferTime = e.target.value
+                                          ? parseInt(e.target.value)
+                                          : undefined;
+                                        updateService(service.id, {
+                                          bufferTime,
+                                        });
                                       }}
                                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                                       placeholder={landingPage.bufferTime.toString()}
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                      Opcional. Si vacío, usa tiempo intermedio general ({landingPage.bufferTime} min)
+                                      Opcional. Si vacío, usa tiempo intermedio
+                                      general ({landingPage.bufferTime} min)
                                     </p>
                                   </div>
                                 </div>
                               </div>
-                              
+
                               <button
                                 onClick={() => removeService(service.id)}
                                 className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-md"
@@ -787,31 +950,47 @@ export default function MiPaginaWebPage() {
                   </div>
                 )}
 
-                {activeTab === 'calendar' && (
+                {activeTab === "calendar" && (
                   <div className="space-y-6">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h2 className="text-lg font-medium text-gray-900">Configuración del Calendario</h2>
+                        <h2 className="text-lg font-medium text-gray-900">
+                          Configuración del Calendario
+                        </h2>
                         <p className="text-sm text-gray-600 mt-1">
-                          Configura la duración y tiempo intermedio por defecto. Cada servicio puede tener configuración específica.
+                          Configura la duración y tiempo intermedio por defecto.
+                          Cada servicio puede tener configuración específica.
                         </p>
                       </div>
                       <div className="bg-blue-50 rounded-lg p-4 max-w-sm">
                         <div className="flex items-start space-x-3">
                           <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <h3 className="text-sm font-medium text-blue-900 mb-1">¿Cómo funciona?</h3>
+                            <h3 className="text-sm font-medium text-blue-900 mb-1">
+                              ¿Cómo funciona?
+                            </h3>
                             <div className="text-xs text-blue-700 space-y-1">
-                              <p>• El cliente ve solo los horarios disponibles</p>
-                              <p>• Automáticamente se bloquean los tiempos ocupados</p>
-                              <p>• En tu calendario aparecen ambos períodos por separado</p>
-                              <p>• Te da tiempo para preparar la siguiente consulta</p>
+                              <p>
+                                • El cliente ve solo los horarios disponibles
+                              </p>
+                              <p>
+                                • Automáticamente se bloquean los tiempos
+                                ocupados
+                              </p>
+                              <p>
+                                • En tu calendario aparecen ambos períodos por
+                                separado
+                              </p>
+                              <p>
+                                • Te da tiempo para preparar la siguiente
+                                consulta
+                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-6">
                       {/* Mostrar calendario */}
                       <div className="flex items-center">
@@ -819,14 +998,22 @@ export default function MiPaginaWebPage() {
                           type="checkbox"
                           id="showCalendar"
                           checked={landingPage.showCalendar}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, showCalendar: e.target.checked }))}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              showCalendar: e.target.checked,
+                            }))
+                          }
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="showCalendar" className="ml-3 text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="showCalendar"
+                          className="ml-3 text-sm font-medium text-gray-700"
+                        >
                           Mostrar calendario en la página pública
                         </label>
                       </div>
-                      
+
                       {landingPage.showCalendar && (
                         <>
                           {/* Descripción del calendario */}
@@ -836,8 +1023,13 @@ export default function MiPaginaWebPage() {
                             </label>
                             <input
                               type="text"
-                              value={landingPage.calendarDescription || ''}
-                              onChange={(e) => setLandingPage(prev => ({ ...prev, calendarDescription: e.target.value }))}
+                              value={landingPage.calendarDescription || ""}
+                              onChange={(e) =>
+                                setLandingPage((prev) => ({
+                                  ...prev,
+                                  calendarDescription: e.target.value,
+                                }))
+                              }
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                               placeholder="Ej: Selecciona una fecha y hora disponible para agendar tu cita"
                             />
@@ -847,26 +1039,37 @@ export default function MiPaginaWebPage() {
                           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
                             <div className="flex items-center space-x-3 mb-4">
                               <Clock className="h-5 w-5 text-blue-600" />
-                              <h3 className="text-md font-medium text-gray-900">Duración de Citas</h3>
+                              <h3 className="text-md font-medium text-gray-900">
+                                Duración de Citas
+                              </h3>
                             </div>
-                            
+
                             <div className="space-y-4">
                               <p className="text-sm text-gray-600">
-                                Define cuánto tiempo duran tus consultas o sesiones
+                                Define cuánto tiempo duran tus consultas o
+                                sesiones
                               </p>
-                              
+
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {[20, 30, 45, 60].map((duration) => (
                                   <button
                                     key={duration}
-                                    onClick={() => setLandingPage(prev => ({ ...prev, appointmentDuration: duration }))}
+                                    onClick={() =>
+                                      setLandingPage((prev) => ({
+                                        ...prev,
+                                        appointmentDuration: duration,
+                                      }))
+                                    }
                                     className={`p-3 rounded-lg border-2 transition-all ${
-                                      landingPage.appointmentDuration === duration
-                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                                      landingPage.appointmentDuration ===
+                                      duration
+                                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                                        : "border-gray-200 hover:border-gray-300 text-gray-700"
                                     }`}
                                   >
-                                    <div className="text-lg font-semibold">{duration}</div>
+                                    <div className="text-lg font-semibold">
+                                      {duration}
+                                    </div>
                                     <div className="text-xs">minutos</div>
                                   </button>
                                 ))}
@@ -883,15 +1086,27 @@ export default function MiPaginaWebPage() {
                                     min="5"
                                     max="240"
                                     step="5"
-                                    value={![20, 30, 45, 60].includes(landingPage.appointmentDuration) ? landingPage.appointmentDuration : ''}
+                                    value={
+                                      ![20, 30, 45, 60].includes(
+                                        landingPage.appointmentDuration
+                                      )
+                                        ? landingPage.appointmentDuration
+                                        : ""
+                                    }
                                     onChange={(e) => {
-                                      const value = parseInt(e.target.value) || 60;
-                                      setLandingPage(prev => ({ ...prev, appointmentDuration: value }));
+                                      const value =
+                                        parseInt(e.target.value) || 60;
+                                      setLandingPage((prev) => ({
+                                        ...prev,
+                                        appointmentDuration: value,
+                                      }));
                                     }}
                                     className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                                     placeholder="60"
                                   />
-                                  <span className="text-sm text-gray-600">minutos</span>
+                                  <span className="text-sm text-gray-600">
+                                    minutos
+                                  </span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   Entre 5 y 240 minutos, en incrementos de 5
@@ -904,30 +1119,38 @@ export default function MiPaginaWebPage() {
                           <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-r from-orange-50 to-red-50">
                             <div className="flex items-center space-x-3 mb-4">
                               <Plus className="h-5 w-5 text-orange-600" />
-                              <h3 className="text-md font-medium text-gray-900">Tiempo Intermedio</h3>
+                              <h3 className="text-md font-medium text-gray-900">
+                                Tiempo Intermedio
+                              </h3>
                             </div>
-                            
+
                             <div className="space-y-4">
                               <p className="text-sm text-gray-600">
-                                Tiempo automático que se agrega después de cada cita para preparación, descanso o limpieza
+                                Tiempo automático que se agrega después de cada
+                                cita para preparación, descanso o limpieza
                               </p>
-                              
+
                               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                 {[0, 5, 10, 15, 30].map((buffer) => (
                                   <button
                                     key={buffer}
-                                    onClick={() => setLandingPage(prev => ({ ...prev, bufferTime: buffer }))}
+                                    onClick={() =>
+                                      setLandingPage((prev) => ({
+                                        ...prev,
+                                        bufferTime: buffer,
+                                      }))
+                                    }
                                     className={`p-3 rounded-lg border-2 transition-all ${
                                       landingPage.bufferTime === buffer
-                                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                                        ? "border-orange-500 bg-orange-50 text-orange-700"
+                                        : "border-gray-200 hover:border-gray-300 text-gray-700"
                                     }`}
                                   >
                                     <div className="text-lg font-semibold">
-                                      {buffer === 0 ? 'Sin' : buffer}
+                                      {buffer === 0 ? "Sin" : buffer}
                                     </div>
                                     <div className="text-xs">
-                                      {buffer === 0 ? 'tiempo' : 'min'}
+                                      {buffer === 0 ? "tiempo" : "min"}
                                     </div>
                                   </button>
                                 ))}
@@ -944,15 +1167,27 @@ export default function MiPaginaWebPage() {
                                     min="0"
                                     max="120"
                                     step="5"
-                                    value={![0, 5, 10, 15, 30].includes(landingPage.bufferTime) ? landingPage.bufferTime : ''}
+                                    value={
+                                      ![0, 5, 10, 15, 30].includes(
+                                        landingPage.bufferTime
+                                      )
+                                        ? landingPage.bufferTime
+                                        : ""
+                                    }
                                     onChange={(e) => {
-                                      const value = parseInt(e.target.value) || 0;
-                                      setLandingPage(prev => ({ ...prev, bufferTime: value }));
+                                      const value =
+                                        parseInt(e.target.value) || 0;
+                                      setLandingPage((prev) => ({
+                                        ...prev,
+                                        bufferTime: value,
+                                      }));
                                     }}
                                     className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
                                     placeholder="0"
                                   />
-                                  <span className="text-sm text-gray-600">minutos</span>
+                                  <span className="text-sm text-gray-600">
+                                    minutos
+                                  </span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   Entre 0 y 120 minutos, en incrementos de 5
@@ -965,10 +1200,22 @@ export default function MiPaginaWebPage() {
                                   ¿Cómo funciona el tiempo intermedio?
                                 </h4>
                                 <ul className="text-sm text-orange-700 space-y-1">
-                                  <li>• El cliente ve solo su cita ({landingPage.appointmentDuration} min)</li>
-                                  <li>• Automáticamente se bloquean {landingPage.bufferTime} min adicionales</li>
-                                  <li>• En tu calendario aparecen ambos períodos por separado</li>
-                                  <li>• Te da tiempo para preparar la siguiente consulta</li>
+                                  <li>
+                                    • El cliente ve solo su cita (
+                                    {landingPage.appointmentDuration} min)
+                                  </li>
+                                  <li>
+                                    • Automáticamente se bloquean{" "}
+                                    {landingPage.bufferTime} min adicionales
+                                  </li>
+                                  <li>
+                                    • En tu calendario aparecen ambos períodos
+                                    por separado
+                                  </li>
+                                  <li>
+                                    • Te da tiempo para preparar la siguiente
+                                    consulta
+                                  </li>
                                 </ul>
                               </div>
                             </div>
@@ -978,15 +1225,38 @@ export default function MiPaginaWebPage() {
                           <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
                             <div className="flex items-center space-x-3 mb-4">
                               <Calendar className="h-5 w-5 text-blue-600" />
-                              <h3 className="text-md font-medium text-gray-900">Vista Previa del Calendario</h3>
+                              <h3 className="text-md font-medium text-gray-900">
+                                Vista Previa del Calendario
+                              </h3>
                             </div>
-                            
+
                             <div className="text-sm text-gray-600 space-y-2">
-                              <p>• <strong>Duración por cita:</strong> {landingPage.appointmentDuration} minutos</p>
-                              <p>• <strong>Tiempo intermedio:</strong> {landingPage.bufferTime} minutos {landingPage.bufferTime > 0 ? '(automático)' : '(sin tiempo intermedio)'}</p>
-                              <p>• <strong>Total por slot:</strong> {landingPage.appointmentDuration + landingPage.bufferTime} minutos</p>
-                              <p>• <strong>Lo que ve el cliente:</strong> Solo su cita de {landingPage.appointmentDuration} minutos</p>
-                              <p>• <strong>Lo que ves tú:</strong> Cita principal + tiempo intermedio separado</p>
+                              <p>
+                                • <strong>Duración por cita:</strong>{" "}
+                                {landingPage.appointmentDuration} minutos
+                              </p>
+                              <p>
+                                • <strong>Tiempo intermedio:</strong>{" "}
+                                {landingPage.bufferTime} minutos{" "}
+                                {landingPage.bufferTime > 0
+                                  ? "(automático)"
+                                  : "(sin tiempo intermedio)"}
+                              </p>
+                              <p>
+                                • <strong>Total por slot:</strong>{" "}
+                                {landingPage.appointmentDuration +
+                                  landingPage.bufferTime}{" "}
+                                minutos
+                              </p>
+                              <p>
+                                • <strong>Lo que ve el cliente:</strong> Solo su
+                                cita de {landingPage.appointmentDuration}{" "}
+                                minutos
+                              </p>
+                              <p>
+                                • <strong>Lo que ves tú:</strong> Cita principal
+                                + tiempo intermedio separado
+                              </p>
                             </div>
                           </div>
                         </>
@@ -995,30 +1265,50 @@ export default function MiPaginaWebPage() {
                   </div>
                 )}
 
-                {activeTab === 'form' && (
+                {activeTab === "form" && (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-medium text-gray-900">Formulario de Agendamiento</h2>
+                      <h2 className="text-lg font-medium text-gray-900">
+                        Formulario de Agendamiento
+                      </h2>
                     </div>
-                    
+
                     <div className="space-y-4">
-                      {(Array.isArray(landingPage.formFields) ? landingPage.formFields : defaultFormFields).map((field, index) => (
-                        <div key={index} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                      {(Array.isArray(landingPage.formFields)
+                        ? landingPage.formFields
+                        : defaultFormFields
+                      ).map((field, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
+                        >
                           <div className="flex-1 grid grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Campo</label>
-                                                              <input
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Campo
+                              </label>
+                              <input
                                 type="text"
                                 value={field.label}
-                                onChange={(e) => updateFormField(index, { label: e.target.value })}
+                                onChange={(e) =>
+                                  updateFormField(index, {
+                                    label: e.target.value,
+                                  })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-400"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Tipo</label>
-                                                              <select
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Tipo
+                              </label>
+                              <select
                                 value={field.type}
-                                onChange={(e) => updateFormField(index, { type: e.target.value })}
+                                onChange={(e) =>
+                                  updateFormField(index, {
+                                    type: e.target.value,
+                                  })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                               >
                                 <option value="text">Texto</option>
@@ -1032,14 +1322,22 @@ export default function MiPaginaWebPage() {
                               <input
                                 type="checkbox"
                                 checked={field.required}
-                                onChange={(e) => updateFormField(index, { required: e.target.checked })}
+                                onChange={(e) =>
+                                  updateFormField(index, {
+                                    required: e.target.checked,
+                                  })
+                                }
                                 className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                               />
-                              <label className="ml-2 text-sm text-gray-700">Obligatorio</label>
+                              <label className="ml-2 text-sm text-gray-700">
+                                Obligatorio
+                              </label>
                             </div>
                           </div>
-                          
-                          {!['name', 'lastName', 'email'].includes(field.name) && (
+
+                          {!["name", "lastName", "email"].includes(
+                            field.name
+                          ) && (
                             <button
                               onClick={() => removeFormField(index)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-md"
@@ -1050,12 +1348,21 @@ export default function MiPaginaWebPage() {
                         </div>
                       ))}
                     </div>
-                    
+
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-3">Agregar Campo</h3>
+                      <h3 className="text-sm font-medium text-gray-900 mb-3">
+                        Agregar Campo
+                      </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {availableFields
-                          .filter(field => !(Array.isArray(landingPage.formFields) ? landingPage.formFields : defaultFormFields).some(f => f.name === field.name))
+                          .filter(
+                            (field) =>
+                              !(
+                                Array.isArray(landingPage.formFields)
+                                  ? landingPage.formFields
+                                  : defaultFormFields
+                              ).some((f) => f.name === field.name)
+                          )
                           .map((field) => (
                             <button
                               key={field.name}
@@ -1071,10 +1378,12 @@ export default function MiPaginaWebPage() {
                   </div>
                 )}
 
-                {activeTab === 'contact' && (
+                {activeTab === "contact" && (
                   <div className="space-y-6">
-                    <h2 className="text-lg font-medium text-gray-900">Datos de Contacto</h2>
-                    
+                    <h2 className="text-lg font-medium text-gray-900">
+                      Datos de Contacto
+                    </h2>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1083,13 +1392,18 @@ export default function MiPaginaWebPage() {
                         </label>
                         <input
                           type="text"
-                          value={landingPage.whatsapp || ''}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, whatsapp: e.target.value }))}
+                          value={landingPage.whatsapp || ""}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              whatsapp: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="+56912345678"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Instagram className="h-4 w-4 inline mr-2" />
@@ -1097,13 +1411,18 @@ export default function MiPaginaWebPage() {
                         </label>
                         <input
                           type="text"
-                          value={landingPage.instagram || ''}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, instagram: e.target.value }))}
+                          value={landingPage.instagram || ""}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              instagram: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="@tu_usuario"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Mail className="h-4 w-4 inline mr-2" />
@@ -1111,8 +1430,13 @@ export default function MiPaginaWebPage() {
                         </label>
                         <input
                           type="email"
-                          value={landingPage.contactEmail || ''}
-                          onChange={(e) => setLandingPage(prev => ({ ...prev, contactEmail: e.target.value }))}
+                          value={landingPage.contactEmail || ""}
+                          onChange={(e) =>
+                            setLandingPage((prev) => ({
+                              ...prev,
+                              contactEmail: e.target.value,
+                            }))
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                           placeholder="contacto@tuservicio.com"
                         />
@@ -1121,10 +1445,12 @@ export default function MiPaginaWebPage() {
                   </div>
                 )}
 
-                {activeTab === 'design' && (
+                {activeTab === "design" && (
                   <div className="space-y-6">
-                    <h2 className="text-lg font-medium text-gray-900">Diseño y Branding</h2>
-                    
+                    <h2 className="text-lg font-medium text-gray-900">
+                      Diseño y Branding
+                    </h2>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3">
                         Esquema de Colores
@@ -1133,19 +1459,24 @@ export default function MiPaginaWebPage() {
                         {colorSchemes.map((scheme) => (
                           <button
                             key={scheme.id}
-                            onClick={() => setLandingPage(prev => ({ ...prev, colorScheme: scheme.id }))}
+                            onClick={() =>
+                              setLandingPage((prev) => ({
+                                ...prev,
+                                colorScheme: scheme.id,
+                              }))
+                            }
                             className={`p-4 rounded-lg border-2 text-left ${
                               landingPage.colorScheme === scheme.id
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200 hover:border-gray-300"
                             }`}
                           >
                             <div className="flex items-center space-x-2 mb-2">
-                              <div 
+                              <div
                                 className="w-4 h-4 rounded-full"
                                 style={{ backgroundColor: scheme.primary }}
                               />
-                              <div 
+                              <div
                                 className="w-4 h-4 rounded-full"
                                 style={{ backgroundColor: scheme.secondary }}
                               />
@@ -1166,4 +1497,4 @@ export default function MiPaginaWebPage() {
       </div>
     </div>
   );
-} 
+}

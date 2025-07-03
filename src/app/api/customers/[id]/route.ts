@@ -1,30 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-helper';
+import { getOrCreateUser } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
-// GET - Obtener cliente específico
+// GET - Obtener cliente específico del usuario actual
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
-    // Buscar el usuario en la base de datos
-    const userExists = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    });
-
-    if (!userExists) {
-      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 });
-    }
-
-    const customer = await prisma.customer.findUnique({
-      where: { id: params.id },
+    const customer = await prisma.customer.findFirst({
+      where: { 
+        id: params.id,
+        userId: dbUser.id, // 🔒 CRÍTICO: Solo cliente del usuario actual
+      },
       include: {
         appointments: {
-          where: { userId: userExists.id }, // Solo citas del usuario actual usando el ID de la BD
           orderBy: { date: 'desc' },
           include: {
             user: {
@@ -37,9 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         },
         _count: {
           select: { 
-            appointments: {
-              where: { userId: userExists.id } // Contar solo las citas del usuario actual
-            }
+            appointments: true, // Ya están filtradas por la relación
           },
         },
       },
@@ -56,38 +43,38 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// PUT - Actualizar cliente específico
+// PUT - Actualizar cliente específico del usuario actual
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
     const { name, email, phone } = body;
 
-    // Verificar que el cliente existe
-    const existingCustomer = await prisma.customer.findUnique({
-      where: { id: params.id },
+    // Verificar que el cliente existe Y pertenece al usuario actual
+    const existingCustomer = await prisma.customer.findFirst({
+      where: { 
+        id: params.id,
+        userId: dbUser.id, // 🔒 CRÍTICO: Solo cliente del usuario actual
+      },
     });
 
     if (!existingCustomer) {
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    // Verificar si ya existe otro cliente con el mismo email
+    // Verificar si ya existe otro cliente con el mismo email PARA ESTE USUARIO
     if (email && email !== existingCustomer.email) {
       const emailExists = await prisma.customer.findFirst({
         where: { 
+          userId: dbUser.id, // 🔒 Buscar solo en clientes del usuario actual
           email,
           id: { not: params.id },
         },
       });
 
       if (emailExists) {
-        return NextResponse.json({ error: 'Ya existe otro cliente con este email' }, { status: 400 });
+        return NextResponse.json({ error: 'Ya tienes otro cliente con este email' }, { status: 400 });
       }
     }
 
@@ -113,18 +100,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// DELETE - Eliminar cliente específico
+// DELETE - Eliminar cliente específico del usuario actual
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
-    // Verificar que el cliente existe
-    const existingCustomer = await prisma.customer.findUnique({
-      where: { id: params.id },
+    // Verificar que el cliente existe Y pertenece al usuario actual
+    const existingCustomer = await prisma.customer.findFirst({
+      where: { 
+        id: params.id,
+        userId: dbUser.id, // 🔒 CRÍTICO: Solo cliente del usuario actual
+      },
       include: {
         _count: {
           select: { appointments: true },
@@ -136,10 +122,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    // Verificar si el cliente tiene citas pendientes
+    // Verificar si el cliente tiene citas pendientes DEL USUARIO ACTUAL
     const pendingAppointments = await prisma.appointment.count({
       where: {
         customerId: params.id,
+        userId: dbUser.id, // 🔒 Solo citas del usuario actual
         status: { in: ['PENDING', 'CONFIRMED'] },
         date: { gte: new Date() },
       },

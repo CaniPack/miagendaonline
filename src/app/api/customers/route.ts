@@ -1,37 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-helper';
+import { getOrCreateUser, handleApiError } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
-// GET - Obtener todos los clientes
+// GET - Obtener todos los clientes del usuario actual
 export async function GET() {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    // Buscar el usuario en la base de datos
-    const userExists = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    });
-
-    if (!userExists) {
-      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const customers = await prisma.customer.findMany({
+      where: {
+        userId: dbUser.id, // 🔒 FILTRO CRÍTICO: Solo clientes del usuario actual
+      },
       include: {
         appointments: {
-          where: { userId: userExists.id }, // Solo citas del usuario actual usando el ID de la BD
           orderBy: { date: 'desc' },
           take: 5, // Últimas 5 citas
         },
         _count: {
           select: { 
-            appointments: {
-              where: { userId: userExists.id } // Contar solo las citas del usuario actual
-            }
+            appointments: true // Ya están filtradas por la relación
           },
         },
       },
@@ -40,41 +27,40 @@ export async function GET() {
 
     return NextResponse.json({ customers });
   } catch (error) {
-    console.error('Error al obtener clientes:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return handleApiError(error, 'GET customers');
   }
 }
 
-// POST - Crear nuevo cliente
+// POST - Crear nuevo cliente para el usuario actual
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
-    const { name, email, phone, company, position, notes } = body;
+    const { name, email, phone } = body;
 
     // Validación básica
     if (!name) {
       return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 });
     }
 
-    // Verificar si ya existe un cliente con el mismo email
+    // Verificar si ya existe un cliente con el mismo email PARA ESTE USUARIO
     if (email) {
       const existingCustomer = await prisma.customer.findFirst({
-        where: { email },
+        where: { 
+          userId: dbUser.id, // 🔒 Solo buscar en clientes del usuario actual
+          email 
+        },
       });
 
       if (existingCustomer) {
-        return NextResponse.json({ error: 'Ya existe un cliente con este email' }, { status: 400 });
+        return NextResponse.json({ error: 'Ya tienes un cliente con este email' }, { status: 400 });
       }
     }
 
     const customer = await prisma.customer.create({
       data: {
+        userId: dbUser.id, // 🔒 CRÍTICO: Asignar al usuario actual
         name,
         email: email || null,
         phone: phone || null,
@@ -88,7 +74,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {
-    console.error('Error al crear cliente:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return handleApiError(error, 'POST customers');
   }
 } 

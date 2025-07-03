@@ -10,80 +10,85 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  email          String        @unique
-  name           String?
-  phone          String?
-  role           Role          @default(CLIENT)
-  clerkId        String?       @unique
-  appointments   Appointment[]
-  payments       Payment[]
-  notifications  Notification[]
-  plan           Plan?         @relation(fields: [planId], references: [id])
-  planId         String?
-  landingPage    LandingPage?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  phone         String?
+  role          Role           @default(CLIENT)
+  clerkId       String?        @unique
+  appointments  Appointment[]
+  customers     Customer[] // ➕ NUEVO: relación con clientes
+  payments      Payment[]
+  notifications Notification[]
+  plan          Plan?          @relation(fields: [planId], references: [id])
+  planId        String?
+  landingPage   LandingPage?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Appointment {
-  id               String            @id @default(cuid())
-  user             User              @relation(fields: [userId], references: [id])
-  userId           String
-  customer         Customer          @relation(fields: [customerId], references: [id])
-  customerId       String
-  date             DateTime
-  duration         Int               // en minutos
-  status           AppointmentStatus @default(PENDING)
-  notes            String?           // Notas públicas/del cliente
-  internalComment  String?           // Comentario interno del profesional
-  internalPrice    Int?              // Precio interno en CLP
-  publicPrice      Int?              // Precio público/cobrado
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  user            User              @relation(fields: [userId], references: [id])
+  userId          String
+  customer        Customer          @relation(fields: [customerId], references: [id])
+  customerId      String
+  date            DateTime
+  duration        Int // en minutos
+  status          AppointmentStatus @default(PENDING)
+  notes           String? // Notas públicas/del cliente
+  internalComment String? // Comentario interno del profesional
+  internalPrice   Int? // Precio interno en CLP
+  publicPrice     Int? // Precio público/cobrado
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model Customer {
-  id             String        @id @default(cuid())
-  name           String
-  email          String?       @unique
-  phone          String?
-  appointments   Appointment[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String
+  name         String
+  email        String?
+  phone        String?
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, email]) // Email único solo por usuario
 }
 
 model Plan {
-  id             String   @id @default(cuid())
-  name           String   @unique
-  price          Int      // en CLP o USD según implementación
-  whatsappQuota  Int      // confirmaciones de WhatsApp
-  emailQuota     Int      // correos mensuales de marketing
-  features       String   // características como JSON string para SQLite
-  users          User[]   // suscriptores de este plan
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String   @unique
+  price         Int // en CLP o USD según implementación
+  whatsappQuota Int // confirmaciones de WhatsApp
+  emailQuota    Int // correos mensuales de marketing
+  features      String // características como JSON string para SQLite
+  users         User[] // suscriptores de este plan
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  user           User          @relation(fields: [userId], references: [id])
-  userId         String
-  amount         Int
-  status         PaymentStatus @default(PENDING)
-  paymentDate    DateTime      @default(now())
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  user        User          @relation(fields: [userId], references: [id])
+  userId      String
+  amount      Int
+  status      PaymentStatus @default(PENDING)
+  paymentDate DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model Notification {
-  id             String           @id @default(cuid())
-  user           User             @relation(fields: [userId], references: [id])
-  userId         String
-  type           NotificationType
-  message        String
-  read           Boolean          @default(false)
-  createdAt      DateTime         @default(now())
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 }
 
 enum Role {
@@ -112,51 +117,51 @@ enum NotificationType {
 }
 
 model LandingPage {
-  id                    String   @id @default(cuid())
-  user                  User     @relation(fields: [userId], references: [id])
-  userId                String   @unique
-  
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
   // Información del profesional
-  professionalName      String
-  title                 String   // "Nutricionista", "Coach", etc.
-  tagline               String   // Frase de valor
-  description           String   // Descripción de servicios
-  profileImage          String?  // URL de la imagen
-  coverImage            String?  // URL de imagen de portada
-  logo                  String?  // URL del logo
-  
+  professionalName String
+  title            String // "Nutricionista", "Coach", etc.
+  tagline          String // Frase de valor
+  description      String // Descripción de servicios
+  profileImage     String? // URL de la imagen
+  coverImage       String? // URL de imagen de portada
+  logo             String? // URL del logo
+
   // Servicios (JSON string) - array de {name, description, price}
-  services              String   @default("[]")
-  
+  services String @default("[]")
+
   // Configuración del calendario
-  showCalendar          Boolean  @default(true)
-  calendarDescription   String?  // Texto descriptivo del calendario
-  appointmentDuration   Int      @default(60)   // Duración por defecto de citas en minutos
-  bufferTime            Int      @default(0)    // Tiempo intermedio entre citas en minutos
-  
+  showCalendar        Boolean @default(true)
+  calendarDescription String? // Texto descriptivo del calendario
+  appointmentDuration Int     @default(60) // Duración por defecto de citas en minutos
+  bufferTime          Int     @default(0) // Tiempo intermedio entre citas en minutos
+
   // Configuración del botón de agendar
-  buttonText            String   @default("Agendar Hora")
-  requirePayment        Boolean  @default(false)
-  
+  buttonText     String  @default("Agendar Hora")
+  requirePayment Boolean @default(false)
+
   // Campos del formulario (JSON string)
-  formFields            String   @default("[{\"name\":\"name\",\"label\":\"Nombre\",\"type\":\"text\",\"required\":true},{\"name\":\"lastName\",\"label\":\"Apellido\",\"type\":\"text\",\"required\":true},{\"name\":\"email\",\"label\":\"Correo\",\"type\":\"email\",\"required\":true},{\"name\":\"comment\",\"label\":\"Comentario\",\"type\":\"textarea\",\"required\":false}]")
-  
+  formFields String @default("[{\"name\":\"name\",\"label\":\"Nombre\",\"type\":\"text\",\"required\":true},{\"name\":\"lastName\",\"label\":\"Apellido\",\"type\":\"text\",\"required\":true},{\"name\":\"email\",\"label\":\"Correo\",\"type\":\"email\",\"required\":true},{\"name\":\"comment\",\"label\":\"Comentario\",\"type\":\"textarea\",\"required\":false}]")
+
   // Datos de contacto
-  whatsapp              String?
-  instagram             String?
-  contactEmail          String?
-  
+  whatsapp     String?
+  instagram    String?
+  contactEmail String?
+
   // Branding
-  colorScheme           String   @default("blue") // blue, green, purple, orange
-  
+  colorScheme String @default("blue") // blue, green, purple, orange
+
   // SEO y URL
-  slug                  String   @unique
-  metaTitle             String?
-  metaDescription       String?
-  
+  slug            String  @unique
+  metaTitle       String?
+  metaDescription String?
+
   // Estado
-  isPublished           Boolean  @default(false)
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-} 
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,154 +1,156 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-helper';
+import { getOrCreateUser, handleApiError } from '@/lib/auth-helper';
 import { prisma } from '@/lib/prisma';
 
-// GET - Obtener todas las citas del usuario
+// GET - Obtener todas las citas del usuario actual
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    // Buscar el usuario en la base de datos
-    const userExists = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    });
-
-    if (!userExists) {
-      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 });
-    }
-
+    const { dbUser } = await getOrCreateUser();
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period'); // today, week, month
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const period = searchParams.get('period');
 
-    // Calculate date ranges based on period or custom dates
+    // Calcular fechas según el período
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
     let dateFilter = {};
-    const now = new Date();
     
-    if (startDate && endDate) {
-      // Custom date range
+    if (period === 'today') {
       dateFilter = {
         date: {
-          gte: new Date(startDate),
-          lt: new Date(endDate)
-        }
-      };
-    } else if (period === 'today') {
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      dateFilter = {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay
-        }
+          gte: startOfToday,
+          lte: endOfToday,
+        },
       };
     } else if (period === 'week') {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
-      startOfWeek.setHours(0, 0, 0, 0);
-      
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
       const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 7);
-      
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59);
+
       dateFilter = {
         date: {
           gte: startOfWeek,
-          lt: endOfWeek
-        }
+          lte: endOfWeek,
+        },
       };
     } else if (period === 'month') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59);
+
       dateFilter = {
         date: {
           gte: startOfMonth,
-          lt: endOfMonth
-        }
+          lte: endOfMonth,
+        },
       };
     }
 
     const appointments = await prisma.appointment.findMany({
-      where: { 
-        userId: userExists.id, // Usar el ID de la base de datos
-        ...dateFilter
+      where: {
+        userId: dbUser.id, // 🔒 CRÍTICO: Solo citas del usuario actual
+        ...dateFilter,
       },
       include: {
-        customer: true,
-        user: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
-      orderBy: { date: 'asc' },
+      orderBy: { date: 'desc' },
     });
 
     return NextResponse.json({ appointments });
   } catch (error) {
-    console.error('Error al obtener citas:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return handleApiError(error, 'GET appointments');
   }
 }
 
-// POST - Crear nueva cita
+// POST - Crear nueva cita para el usuario actual
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await getAuthUser();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
-    const { customerId, date, duration, notes } = body;
+    const { customerId, date, duration, notes, internalComment, internalPrice, publicPrice } = body;
 
-    // Validación básica
+    // Validaciones básicas
     if (!customerId || !date || !duration) {
-      return NextResponse.json({ error: 'Campos requeridos: customerId, date, duration' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
     }
 
-    // Verificar que el usuario existe en la base de datos
-    const userExists = await prisma.user.findUnique({
-      where: { clerkId: userId }
+    // Verificar que el cliente existe Y pertenece al usuario actual
+    const customer = await prisma.customer.findFirst({
+      where: { 
+        id: customerId,
+        userId: dbUser.id, // 🔒 CRÍTICO: Solo cliente del usuario actual
+      },
     });
 
-    if (!userExists) {
-      return NextResponse.json({ error: 'Usuario no encontrado en la base de datos' }, { status: 404 });
+    if (!customer) {
+      return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    // Verificar que el customer existe
-    const customerExists = await prisma.customer.findUnique({
-      where: { id: customerId }
+    // Verificar conflictos de horarios con otras citas del usuario actual
+    const appointmentDate = new Date(date);
+    const appointmentEnd = new Date(appointmentDate);
+    appointmentEnd.setMinutes(appointmentEnd.getMinutes() + duration);
+
+    const conflictingAppointments = await prisma.appointment.findMany({
+      where: {
+        userId: dbUser.id, // 🔒 Solo buscar conflictos en citas del usuario actual
+        date: {
+          gte: appointmentDate,
+          lt: appointmentEnd,
+        },
+        status: { in: ['PENDING', 'CONFIRMED'] },
+      },
     });
 
-    if (!customerExists) {
-      return NextResponse.json({ error: 'Cliente no encontrado. Por favor selecciona un cliente válido.' }, { status: 404 });
+    if (conflictingAppointments.length > 0) {
+      return NextResponse.json({ 
+        error: 'Conflicto de horarios detectado',
+        conflicts: conflictingAppointments.map(apt => ({
+          id: apt.id,
+          date: apt.date,
+          duration: apt.duration,
+        }))
+      }, { status: 409 });
     }
 
     const appointment = await prisma.appointment.create({
       data: {
-        userId: userExists.id, // Usar el ID de la base de datos, no el clerkId
+        userId: dbUser.id, // 🔒 CRÍTICO: Asignar al usuario actual
         customerId,
-        date: new Date(date),
-        duration: parseInt(duration),
-        notes: notes || null,
+        date: appointmentDate,
+        duration,
+        notes,
+        internalComment,
+        internalPrice,
+        publicPrice,
         status: 'PENDING',
       },
       include: {
-        customer: true,
-        user: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
 
     return NextResponse.json(appointment, { status: 201 });
-  } catch (error: any) {
-    console.error('Error al crear cita:', error);
-    if (error.code === 'P2003') {
-      return NextResponse.json({ 
-        error: 'Error de integridad de datos: el cliente o usuario especificado no existe' 
-      }, { status: 400 });
-    }
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  } catch (error) {
+    return handleApiError(error, 'POST appointments');
   }
 } 
