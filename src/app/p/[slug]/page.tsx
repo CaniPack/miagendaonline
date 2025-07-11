@@ -700,7 +700,10 @@ export default function LandingPage() {
                                 (date, index) => {
                                   if (!date) {
                                     return (
-                                      <div key={index} className="h-10"></div>
+                                      <div
+                                        key={`empty-${index}`}
+                                        className="h-10"
+                                      ></div>
                                     );
                                   }
 
@@ -711,7 +714,7 @@ export default function LandingPage() {
 
                                   return (
                                     <button
-                                      key={date.getDate()}
+                                      key={`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`}
                                       type="button"
                                       onClick={() => handleDateSelect(date)}
                                       disabled={isPast || !isAvailable}
