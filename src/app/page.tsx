@@ -270,13 +270,13 @@ function AuthenticatedDashboard() {
       ]);
 
       // Set appointments data (handle null responses)
-      setTodayAppointments(Array.isArray(todayData) ? todayData : []);
-      setWeekAppointments(Array.isArray(weekData) ? weekData : []);
-      setMonthAppointments(Array.isArray(monthData) ? monthData : []);
+      setTodayAppointments(todayData?.appointments || []);
+      setWeekAppointments(weekData?.appointments || []);
+      setMonthAppointments(monthData?.appointments || []);
 
       // Calculate stats safely
-      const safeToday = Array.isArray(todayData) ? todayData : [];
-      const safeMonth = Array.isArray(monthData) ? monthData : [];
+      const safeToday = todayData?.appointments || [];
+      const safeMonth = monthData?.appointments || [];
       const safeClients = clientsData?.customers || [];
 
       const pendingToday = safeToday.filter(

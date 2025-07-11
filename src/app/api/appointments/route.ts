@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     const { dbUser } = await getOrCreateUser();
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     // Calcular fechas según el período
     const today = new Date();
@@ -16,7 +18,15 @@ export async function GET(request: NextRequest) {
 
     let dateFilter = {};
     
-    if (period === 'today') {
+    // Manejar rangos de fecha personalizados
+    if (startDate && endDate) {
+      dateFilter = {
+        date: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      };
+    } else if (period === 'today') {
       dateFilter = {
         date: {
           gte: startOfToday,
