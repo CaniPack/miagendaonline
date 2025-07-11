@@ -20,7 +20,7 @@ const navigationItems = [
   { name: "Citas", href: "/appointments", icon: PlusIcon },
   { name: "Clientes", href: "/clientes", icon: UsersIcon },
   { name: "Ingresos", href: "/ingresos", icon: TrendingUpIcon },
-  { name: "Mi Página Web", href: "/mi-pagina-web", icon: GlobeIcon },
+  { name: "Mi web", href: "/mi-pagina-web", icon: GlobeIcon },
 ];
 
 export default function Navigation() {
@@ -45,9 +45,8 @@ export default function Navigation() {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              Mi Agenda Online
+            <h1 className="text-2xl font-extrabold text-green-600 tracking-tight">
+              OntheDot
             </h1>
           </div>
 
