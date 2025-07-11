@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+
+interface Service {
+  id: string;
+  duration?: number;
+  bufferTime?: number;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,8 +41,8 @@ export async function GET(request: NextRequest) {
     
     if (serviceId) {
       try {
-        const services = JSON.parse(professional.landingPage.services || '[]');
-        const service = services.find((s: any) => s.id === serviceId);
+        const services: Service[] = JSON.parse(professional.landingPage.services || '[]');
+        const service = services.find((s: Service) => s.id === serviceId);
         if (service) {
           serviceDuration = service.duration || null;
           serviceBufferTime = service.bufferTime || null;
@@ -46,9 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Usar configuración del servicio o la general
-    // @ts-ignore - Los campos appointmentDuration y bufferTime existen en la DB pero pueden no estar en el tipo generado
     const appointmentDuration = serviceDuration || professional.landingPage.appointmentDuration || 60;
-    // @ts-ignore
     const bufferTime = serviceBufferTime || professional.landingPage.bufferTime || 0;
     const totalSlotTime = appointmentDuration + bufferTime; // Tiempo total que ocupa cada cita
 
@@ -61,7 +66,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Configurar rango de fechas
-    let whereCondition: any = {
+    const whereCondition: Prisma.AppointmentWhereInput = {
       userId: professional.id,
       status: { not: 'CANCELLED' } // Excluir citas canceladas
     };

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Bell, X, Check, CheckCheck } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Bell, X, CheckCheck } from "lucide-react";
 
 interface Notification {
   id: string;
-  type: 'EMAIL' | 'WHATSAPP' | 'SYSTEM';
+  type: "EMAIL" | "WHATSAPP" | "SYSTEM";
   message: string;
   read: boolean;
   createdAt: string;
@@ -26,23 +26,23 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications');
+      const response = await fetch("/api/notifications");
       if (response.ok) {
         const data = await response.json();
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.read).length);
       }
     } catch (error) {
-      console.error('Error al cargar notificaciones:', error);
+      console.error("Error al cargar notificaciones:", error);
     }
   };
 
   const markAsRead = async (notificationIds: string[]) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationIds }),
       });
 
@@ -50,7 +50,7 @@ export default function NotificationBell() {
         await fetchNotifications();
       }
     } catch (error) {
-      console.error('Error al marcar como leída:', error);
+      console.error("Error al marcar como leída:", error);
     } finally {
       setLoading(false);
     }
@@ -59,9 +59,9 @@ export default function NotificationBell() {
   const markAllAsRead = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markAllAsRead: true }),
       });
 
@@ -69,7 +69,7 @@ export default function NotificationBell() {
         await fetchNotifications();
       }
     } catch (error) {
-      console.error('Error al marcar todas como leídas:', error);
+      console.error("Error al marcar todas como leídas:", error);
     } finally {
       setLoading(false);
     }
@@ -77,10 +77,14 @@ export default function NotificationBell() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'EMAIL': return '📧';
-      case 'WHATSAPP': return '💬';
-      case 'SYSTEM': return '🔔';
-      default: return '📢';
+      case "EMAIL":
+        return "📧";
+      case "WHATSAPP":
+        return "💬";
+      case "SYSTEM":
+        return "🔔";
+      default:
+        return "📢";
     }
   };
 
@@ -89,8 +93,8 @@ export default function NotificationBell() {
     const notificationDate = new Date(dateString);
     const diffMs = now.getTime() - notificationDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Ahora';
+
+    if (diffMins < 1) return "Ahora";
     if (diffMins < 60) return `${diffMins}m`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;
     return `${Math.floor(diffMins / 1440)}d`;
@@ -106,7 +110,7 @@ export default function NotificationBell() {
         <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
@@ -157,18 +161,24 @@ export default function NotificationBell() {
                   <div
                     key={notification.id}
                     className={`px-4 py-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer ${
-                      !notification.read ? 'bg-blue-50' : ''
+                      !notification.read ? "bg-blue-50" : ""
                     }`}
-                    onClick={() => !notification.read && markAsRead([notification.id])}
+                    onClick={() =>
+                      !notification.read && markAsRead([notification.id])
+                    }
                   >
                     <div className="flex items-start gap-3">
                       <div className="text-lg">
                         {getTypeIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${
-                          !notification.read ? 'font-medium text-gray-900' : 'text-gray-700'
-                        }`}>
+                        <p
+                          className={`text-sm ${
+                            !notification.read
+                              ? "font-medium text-gray-900"
+                              : "text-gray-700"
+                          }`}
+                        >
                           {notification.message}
                         </p>
                         <div className="flex items-center justify-between mt-1">
@@ -212,4 +222,4 @@ export default function NotificationBell() {
       )}
     </div>
   );
-} 
+}
