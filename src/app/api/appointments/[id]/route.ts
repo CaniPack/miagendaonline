@@ -5,13 +5,14 @@ import { prisma } from '@/lib/prisma';
 // GET - Obtener una cita específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { dbUser } = await getOrCreateUser();
 
     const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: {
           select: {
@@ -43,9 +44,10 @@ export async function GET(
 // PUT - Actualizar una cita específica
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { dbUser } = await getOrCreateUser();
 
     const body = await request.json();
@@ -53,7 +55,7 @@ export async function PUT(
 
     // Verificar que la cita existe y pertenece al usuario
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAppointment) {
@@ -65,7 +67,7 @@ export async function PUT(
     }
 
     const appointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(date && { date: new Date(date) }),
         ...(duration && { duration }),
@@ -98,14 +100,15 @@ export async function PUT(
 // DELETE - Eliminar una cita específica
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { dbUser } = await getOrCreateUser();
 
     // Verificar que la cita existe y pertenece al usuario
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAppointment) {
@@ -117,7 +120,7 @@ export async function DELETE(
     }
 
     await prisma.appointment.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: 'Cita eliminada exitosamente' });
