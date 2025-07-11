@@ -69,35 +69,49 @@ async function main() {
 
   console.log('✅ Planes creados:', plans.length);
 
+  // Crear un usuario de ejemplo para los clientes
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@example.com' },
+    update: {},
+    create: {
+      email: 'test@example.com',
+      name: 'Usuario de Prueba',
+      role: 'CLIENT',
+    },
+  });
+
   // Crear algunos clientes de ejemplo
   const customers = await Promise.all([
     prisma.customer.upsert({
-      where: { email: 'maria.garcia@email.com' },
+      where: { userId_email: { userId: testUser.id, email: 'maria.garcia@email.com' } },
       update: {},
       create: {
         name: 'María García',
         email: 'maria.garcia@email.com',
         phone: '+56 9 1234 5678',
+        userId: testUser.id,
       },
     }),
 
     prisma.customer.upsert({
-      where: { email: 'carlos.lopez@email.com' },
+      where: { userId_email: { userId: testUser.id, email: 'carlos.lopez@email.com' } },
       update: {},
       create: {
         name: 'Carlos López',
         email: 'carlos.lopez@email.com',
         phone: '+56 9 8765 4321',
+        userId: testUser.id,
       },
     }),
 
     prisma.customer.upsert({
-      where: { email: 'ana.ruiz@email.com' },
+      where: { userId_email: { userId: testUser.id, email: 'ana.ruiz@email.com' } },
       update: {},
       create: {
         name: 'Ana Ruiz',
         email: 'ana.ruiz@email.com',
         phone: '+56 9 5555 5555',
+        userId: testUser.id,
       },
     }),
   ]);
