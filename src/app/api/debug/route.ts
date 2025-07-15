@@ -1,42 +1,60 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
+interface DebugInfo {
+  environment: string | undefined;
+  publishableKeyExists: boolean;
+  secretKeyExists: boolean;
+  publishableKeyPrefix: string | undefined;
+  timestamp: string;
+  auth: {
+    userId?: string;
+    isAuthenticated: boolean;
+    error?: string;
+  };
+}
+
 export async function GET() {
   try {
-    // Check if Clerk environment variables are set
+    // Only available in development
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Debug endpoint not available in production' }, { status: 404 });
+    }
+
     const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
     const secretKey = process.env.CLERK_SECRET_KEY;
+    
+    const debugInfo: Partial<DebugInfo> = {
+      environment: process.env.NODE_ENV,
+      publishableKeyExists: !!publishableKey,
+      secretKeyExists: !!secretKey,
+      publishableKeyPrefix: publishableKey?.substring(0, 10),
+      timestamp: new Date().toISOString(),
+    };
 
-    console.log('🔍 Debug Info:');
-    console.log('- Publishable Key exists:', !!publishableKey);
-    console.log('- Secret Key exists:', !!secretKey);
-    console.log('- Publishable Key starts with:', publishableKey?.substring(0, 10));
-
-    // Try to get auth info
-    const authResult = await auth();
-    console.log('- Auth result:', { 
-      userId: authResult.userId,
-      sessionId: authResult.sessionId 
-    });
+    // Test auth
+    try {
+      const { userId } = await auth();
+      debugInfo.auth = {
+        userId: userId || 'No user',
+        isAuthenticated: !!userId,
+      };
+    } catch {
+      debugInfo.auth = {
+        error: 'Auth failed',
+        isAuthenticated: false,
+      };
+    }
 
     return NextResponse.json({
-      clerk: {
-        publishableKeyExists: !!publishableKey,
-        secretKeyExists: !!secretKey,
-        publishableKeyPrefix: publishableKey?.substring(0, 15),
-      },
-      auth: {
-        userId: authResult.userId,
-        sessionId: authResult.sessionId,
-        isAuthenticated: !!authResult.userId
-      }
+      success: true,
+      debug: debugInfo,
     });
+
   } catch (error) {
-    console.error('Debug endpoint error:', error);
-    return NextResponse.json({
-      error: 'Debug failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Debug endpoint failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 } 

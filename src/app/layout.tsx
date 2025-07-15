@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="es">
+      <html lang="es" suppressHydrationWarning={true}>
         <body className={inter.className}>
           <ToastProvider>{children}</ToastProvider>
         </body>

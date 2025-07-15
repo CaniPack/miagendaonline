@@ -1,0 +1,123 @@
+
+> agenda-pro-app@0.1.0 lint
+> next lint
+
+
+./src/app/appointments/page.tsx
+124:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+135:60  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+157:57  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+167:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+179:47  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+183:43  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+191:42  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/calendario/page.tsx
+228:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+239:60  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+250:57  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+254:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/clientes/page.tsx
+86:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+86:32  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+162:57  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+187:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+191:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+199:9  Error: 'handleSort' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+312:70  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+328:43  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+329:51  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+386:31  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+386:44  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/app/ingresos/page.tsx
+60:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/mi-pagina-web/page.tsx
+71:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+89:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+710:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/p/[slug]/page.tsx
+105:6  Warning: React Hook useEffect has a missing dependency: 'fetchLandingPage'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+111:6  Warning: React Hook useEffect has a missing dependency: 'fetchAvailableSlots'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+118:6  Warning: React Hook useEffect has missing dependencies: 'fetchAvailableSlots' and 'landingPage'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/page.tsx
+170:9  Error: 'fetchLandingPageInfo' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+193:82  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+197:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+202:42  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+206:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/components/income/AppointmentIncomeList.tsx
+7:3  Error: 'DollarSignIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+12:10  Error: 'formatCurrency' is defined but never used.  @typescript-eslint/no-unused-vars
+12:26  Error: 'formatDate' is defined but never used.  @typescript-eslint/no-unused-vars
+12:38  Error: 'formatTime' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/Toast.tsx
+80:6  Warning: React Hook useEffect has a missing dependency: 'handleClose'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/hooks/useAppointments.ts
+56:9  Warning: The 'appointments' logical expression could make the dependencies of useCallback Hook (at line 330) change on every render. To fix this, wrap the initialization of 'appointments' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+56:9  Warning: The 'appointments' logical expression could make the dependencies of useCallback Hook (at line 334) change on every render. To fix this, wrap the initialization of 'appointments' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+56:9  Warning: The 'appointments' logical expression could make the dependencies of useCallback Hook (at line 338) change on every render. To fix this, wrap the initialization of 'appointments' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+173:6  Warning: React Hook useCallback has missing dependencies: 'dateFilters.month.end', 'dateFilters.month.start', 'dateFilters.today.end', 'dateFilters.today.start', 'dateFilters.week.end', and 'dateFilters.week.start'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/hooks/useCustomers.ts
+61:9  Warning: The 'customers' logical expression could make the dependencies of useCallback Hook (at line 280) change on every render. To fix this, wrap the initialization of 'customers' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+61:9  Warning: The 'customers' logical expression could make the dependencies of useCallback Hook (at line 286) change on every render. To fix this, wrap the initialization of 'customers' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+61:9  Warning: The 'customers' logical expression could make the dependencies of useCallback Hook (at line 298) change on every render. To fix this, wrap the initialization of 'customers' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+68:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:32  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/hooks/useForm.ts
+25:36  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:12  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+53:12  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+60:50  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:25  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/hooks/useIncome.ts
+96:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+114:54  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+119:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+121:78  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+123:78  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+125:76  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+132:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+134:52  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+164:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+183:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:17  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+189:30  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+197:15  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+197:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+203:35  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+247:15  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+251:28  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+256:13  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+256:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+260:33  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+304:43  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+319:60  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/hooks/usePagination.ts
+47:35  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+156:9  Error: 'endPage' is never reassigned. Use 'const' instead.  prefer-const
+
+./src/hooks/useSearch.ts
+44:52  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+133:29  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+133:64  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/lib/utils/status.ts
+163:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useToast } from "@/components/ToastProvider";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -394,9 +395,11 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center">
           {landingPage.profileImage && (
             <div className="mb-6">
-              <img
+              <Image
                 src={landingPage.profileImage}
                 alt={landingPage.professionalName}
+                width={96}
+                height={96}
                 className="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg"
               />
             </div>

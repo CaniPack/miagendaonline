@@ -11,7 +11,7 @@ export async function GET() {
       where: { userId: dbUser.id },
     });
 
-    return NextResponse.json(landingPage);
+    return NextResponse.json({ landingPage });
   } catch (error) {
     console.error('Error al obtener landing page:', error);
     return NextResponse.json(
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(landingPage);
+    return NextResponse.json({ landingPage });
   } catch (error) {
     console.error('Error al guardar landing page:', error);
     return NextResponse.json(

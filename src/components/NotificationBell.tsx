@@ -16,24 +16,92 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasNetworkError, setHasNetworkError] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
+    // Poll for new notifications every 60 seconds (reduced from 30s to be less aggressive)
+    const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isRetry = false) => {
     try {
-      const response = await fetch("/api/notifications");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s timeout
+      
+      const response = await fetch("/api/notifications", {
+        signal: controller.signal,
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const data = await response.json();
-        setNotifications(data);
-        setUnreadCount(data.filter((n: Notification) => !n.read).length);
+        // Ensure data is an array
+        const notificationsArray = Array.isArray(data) ? data : [];
+        setNotifications(notificationsArray);
+        setUnreadCount(notificationsArray.filter((n: Notification) => !n.read).length);
+        // Reset retry count on success
+        setRetryCount(0);
+        setHasNetworkError(false);
+      } else {
+        console.error("Error al cargar notificaciones:", response.status, response.statusText);
+        // Don't clear existing notifications on error, just log it
       }
     } catch (error) {
-      console.error("Error al cargar notificaciones:", error);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.warn("Petición de notificaciones cancelada por timeout");
+        } else if (error.message === 'Failed to fetch') {
+          console.warn("Error de red al cargar notificaciones (posible interferencia de extensión del navegador)");
+          
+          // Implement retry logic for fetch failures
+          if (!isRetry && retryCount < 3) {
+            setRetryCount(prev => prev + 1);
+            setHasNetworkError(true);
+            setTimeout(() => {
+              console.log(`Reintentando petición de notificaciones (intento ${retryCount + 1}/3)`);
+              fetchNotifications(true);
+            }, 2000 * (retryCount + 1)); // Exponential backoff
+            return;
+          }
+          
+          // Set network error if retries exhausted
+          setHasNetworkError(true);
+          
+          // Try a fallback request without AbortController if it's a fetch failure
+          try {
+            const fallbackResponse = await fetch("/api/notifications", {
+              cache: 'no-cache',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              }
+            });
+            if (fallbackResponse.ok) {
+              const data = await fallbackResponse.json();
+              const notificationsArray = Array.isArray(data) ? data : [];
+              setNotifications(notificationsArray);
+              setUnreadCount(notificationsArray.filter((n: Notification) => !n.read).length);
+              setRetryCount(0);
+              setHasNetworkError(false);
+            }
+          } catch (fallbackError) {
+            console.error("Error en petición de respaldo:", fallbackError);
+          }
+        } else {
+          console.error("Error al cargar notificaciones:", error);
+        }
+      } else {
+        console.error("Error desconocido al cargar notificaciones:", error);
+      }
     }
   };
 
@@ -42,15 +110,24 @@ export default function NotificationBell() {
       setLoading(true);
       const response = await fetch("/api/notifications", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ notificationIds }),
       });
 
       if (response.ok) {
         await fetchNotifications();
+      } else {
+        console.error("Error al marcar como leída:", response.status, response.statusText);
       }
     } catch (error) {
-      console.error("Error al marcar como leída:", error);
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        console.warn("Error de red al marcar notificación como leída");
+      } else {
+        console.error("Error al marcar como leída:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -61,15 +138,24 @@ export default function NotificationBell() {
       setLoading(true);
       const response = await fetch("/api/notifications", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ markAllAsRead: true }),
       });
 
       if (response.ok) {
         await fetchNotifications();
+      } else {
+        console.error("Error al marcar todas como leídas:", response.status, response.statusText);
       }
     } catch (error) {
-      console.error("Error al marcar todas como leídas:", error);
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        console.warn("Error de red al marcar todas las notificaciones como leídas");
+      } else {
+        console.error("Error al marcar todas como leídas:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,12 +191,22 @@ export default function NotificationBell() {
       {/* Bell Icon */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        className={`relative p-2 transition-colors ${
+          hasNetworkError 
+            ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+        } rounded-lg`}
+        title={hasNetworkError ? 'Error de conexión de red' : 'Notificaciones'}
       >
         <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+        {hasNetworkError && unreadCount === 0 && (
+          <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            !
           </span>
         )}
       </button>
@@ -127,8 +223,27 @@ export default function NotificationBell() {
                   {unreadCount} nuevas
                 </span>
               )}
+              {hasNetworkError && (
+                <span className="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">
+                  Error de conexión
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              {hasNetworkError && (
+                <button
+                  onClick={() => {
+                    setRetryCount(0);
+                    setHasNetworkError(false);
+                    fetchNotifications();
+                  }}
+                  disabled={loading}
+                  className="text-orange-600 hover:text-orange-700 text-sm px-2 py-1 rounded border border-orange-300 hover:bg-orange-50"
+                  title="Reintentar conexión"
+                >
+                  Reintentar
+                </button>
+              )}
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
