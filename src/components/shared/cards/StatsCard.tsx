@@ -70,7 +70,54 @@ export default function StatsCard({
     return val.toString();
   };
 
-  const cardContent = (
+  // Mobile content (compact square)
+  const mobileContent = (
+    <>
+      {/* Icono centrado */}
+      <div className="flex justify-center mb-2">
+        <div className={cn(
+          "p-1.5 rounded-md",
+          colors.iconBg
+        )}>
+          {loading ? (
+            <div className="w-4 h-4 animate-pulse bg-gray-300 rounded"></div>
+          ) : (
+            <Icon className={cn("h-4 w-4", colors.icon)} />
+          )}
+        </div>
+      </div>
+
+      {/* Contenido principal centrado */}
+      <div className="text-center space-y-1">
+        <p className="text-xs font-medium text-gray-600 leading-tight">{title}</p>
+        
+        {loading ? (
+          <div className="space-y-1">
+            <div className="h-5 bg-gray-200 rounded animate-pulse mx-auto w-3/4"></div>
+          </div>
+        ) : (
+          <p className="text-lg font-bold text-gray-900">
+            {formatValue(value)}
+          </p>
+        )}
+        
+        {trend && !loading && (
+          <div className={cn(
+            "flex items-center justify-center text-xs font-medium mt-1",
+            trend.direction === "up" ? "text-green-600" : "text-red-600"
+          )}>
+            <span className="mr-1">
+              {trend.direction === "up" ? "↗" : "↘"}
+            </span>
+            {Math.abs(trend.value)}%
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  // Desktop content (horizontal layout)
+  const desktopContent = (
     <>
       {/* Header con ícono */}
       <div className="flex items-center justify-between mb-4">
@@ -117,24 +164,30 @@ export default function StatsCard({
   );
 
   const baseClasses = cn(
-    "p-6 rounded-xl border-2 transition-all duration-200",
+    "rounded-lg border transition-all duration-200",
     colors.bg,
     colors.border,
-    onClick && "cursor-pointer hover:shadow-lg hover:scale-105",
+    // Mobile: compact square
+    "p-3 aspect-square flex flex-col justify-center md:aspect-auto",
+    // Desktop: horizontal layout with more padding
+    "md:p-6 md:flex-none",
+    onClick && "cursor-pointer hover:shadow-md hover:scale-105",
     className
   );
 
   if (onClick) {
     return (
       <button className={baseClasses} onClick={onClick}>
-        {cardContent}
+        <div className="block md:hidden">{mobileContent}</div>
+        <div className="hidden md:block">{desktopContent}</div>
       </button>
     );
   }
 
   return (
     <div className={baseClasses}>
-      {cardContent}
+      <div className="block md:hidden">{mobileContent}</div>
+      <div className="hidden md:block">{desktopContent}</div>
     </div>
   );
 }
@@ -188,17 +241,35 @@ export function LoadingStatsCard({
 
   return (
     <div className={cn(
-      "p-6 rounded-xl border-2 animate-pulse",
+      "rounded-lg border animate-pulse",
       colors[color],
+      // Mobile: compact square
+      "p-3 aspect-square flex flex-col justify-center md:aspect-auto",
+      // Desktop: horizontal layout
+      "md:p-6 md:flex-none",
       className
     )}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-        <div className="w-12 h-4 bg-gray-200 rounded"></div>
+      {/* Mobile skeleton */}
+      <div className="block md:hidden">
+        <div className="flex justify-center mb-2">
+          <div className="w-6 h-6 bg-gray-200 rounded-md"></div>
+        </div>
+        <div className="text-center space-y-1">
+          <div className="h-3 bg-gray-200 rounded w-3/4 mx-auto"></div>
+          <div className="h-5 bg-gray-200 rounded w-1/2 mx-auto"></div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+      
+      {/* Desktop skeleton */}
+      <div className="hidden md:block">
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+          <div className="w-12 h-4 bg-gray-200 rounded"></div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        </div>
       </div>
     </div>
   );

@@ -171,7 +171,27 @@ model LandingPage {
   slug            String  @unique
   metaTitle       String?
   metaDescription String?
-
+  
+  // AEO (Answer Engine Optimization) - FAQ Section
+  faqs            String @default("[]") // Array de {question, answer, summary, keywords}
+  
+  // SEO Settings
+  seoKeywords     String? // Palabras clave principales
+  focusKeyword    String? // Palabra clave principal
+  customSchema    String? // Schema.org personalizado JSON-LD
+  robotsDirective String @default("index,follow") // Directivas para robots
+  canonicalUrl    String? // URL canónica personalizada
+  
+  // AEO Optimization
+  businessType    String? // Tipo de negocio para schema
+  serviceArea     String? // Área de servicio geográfica
+  specializations String @default("[]") // Array de especializaciones
+  
+  // Analytics & SEO Tracking
+  googleSiteVerification String? // Meta tag de verificación de Google
+  bingSiteVerification   String? // Meta tag de verificación de Bing
+  googleAnalyticsId      String? // ID de Google Analytics
+  
   // Estado
   isPublished Boolean @default(false)
 

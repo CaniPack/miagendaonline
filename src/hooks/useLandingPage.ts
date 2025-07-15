@@ -41,6 +41,26 @@ export interface LandingPageData {
   colorScheme: string;
   slug: string;
   isPublished: boolean;
+  
+  // SEO Fields
+  metaTitle?: string;
+  metaDescription?: string;
+  seoKeywords?: string;
+  focusKeyword?: string;
+  robotsDirective?: string;
+  canonicalUrl?: string;
+  
+  // AEO Fields
+  faqs?: string;
+  businessType?: string;
+  serviceArea?: string;
+  specializations?: string;
+  
+  // Analytics Fields
+  googleSiteVerification?: string;
+  bingSiteVerification?: string;
+  googleAnalyticsId?: string;
+  customSchema?: string;
 }
 
 export interface ColorScheme {

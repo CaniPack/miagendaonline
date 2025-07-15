@@ -29,9 +29,16 @@ export default function NotificationBell() {
   const fetchNotifications = async (isRetry = false) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s timeout
       
-      const response = await fetch("/api/notifications", {
+      // Create a timeout promise that rejects after 15 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          controller.abort();
+          reject(new Error('Request timeout'));
+        }, 15000);
+      });
+      
+      const fetchPromise = fetch("/api/notifications", {
         signal: controller.signal,
         cache: 'no-cache',
         headers: {
@@ -40,7 +47,7 @@ export default function NotificationBell() {
         }
       });
       
-      clearTimeout(timeoutId);
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
       
       if (response.ok) {
         const data = await response.json();
@@ -57,7 +64,7 @@ export default function NotificationBell() {
       }
     } catch (error) {
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        if (error.name === 'AbortError' || error.message === 'Request timeout') {
           console.warn("Petición de notificaciones cancelada por timeout");
         } else if (error.message === 'Failed to fetch') {
           console.warn("Error de red al cargar notificaciones (posible interferencia de extensión del navegador)");

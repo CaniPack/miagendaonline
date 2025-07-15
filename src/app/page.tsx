@@ -265,13 +265,19 @@ function AuthenticatedDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <ContentContainer>
-        <PageHeader
-          title={`¡Hola, Usuario! 👋`}
-        />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            Panel de Control
+          </h1>
+          <p className="text-gray-600">
+            Gestiona tu agenda y clientes desde aquí
+          </p>
+        </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
           <StatsCard
             title="Citas de Hoy"
             value={stats?.appointmentsToday || 0}
@@ -280,7 +286,7 @@ function AuthenticatedDashboard() {
             loading={statsLoading}
           />
           <StatsCard
-            title="Total Clientes"
+            title="Clientes"
             value={stats?.totalClients || 0}
             icon={UserIcon}
             color="green"
@@ -302,8 +308,8 @@ function AuthenticatedDashboard() {
           />
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Quick Actions - Only for mobile */}
+        <div className="grid grid-cols-1 md:hidden gap-3 mb-8">
           <button 
             onClick={() => {
               setSelectedAppointment(null);
@@ -324,182 +330,217 @@ function AuthenticatedDashboard() {
               </div>
             </button>
           </Link>
-          <Link href="/mi-pagina-web">
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-              <div className="flex items-center justify-center">
-                <CreditCardIcon className="w-5 h-5 mr-2 text-white" />
-                Mi Página Web
-              </div>
-            </button>
-          </Link>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Today's Appointments */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Citas de Hoy</h2>
-              <Link href="/appointments">
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  Ver todas
-                </button>
-              </Link>
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Buscar citas..."
-                value={appointmentSearch}
-                onChange={(e) => setAppointmentSearch(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {paginatedAppointments.length === 0 ? (
-              <EmptyState
-                title="No hay citas para hoy"
-                description="¡Perfecto momento para relajarse o programar nuevas citas!"
-              />
-            ) : (
-              <div className="space-y-3">
-                {paginatedAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    onClick={() => handleAppointmentClick(appointment)}
-
-                  />
-                ))}
-                
-                {/* Pagination */}
-                {appointmentTotalPages > 1 && (
-                  <div className="flex justify-center items-center space-x-2 mt-4">
-                    <button
-                      onClick={prevAppointmentPage}
-                      disabled={appointmentPage === 1}
-                      className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
-                    >
-                      Anterior
-                    </button>
-                    <span className="text-sm text-gray-600">
-                      Página {appointmentPage} de {appointmentTotalPages}
-                    </span>
-                    <button
-                      onClick={nextAppointmentPage}
-                      disabled={appointmentPage === appointmentTotalPages}
-                      className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
-                    >
-                      Siguiente
-                    </button>
+        {/* Main Content Grid - Desktop Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Appointments */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Citas de Hoy</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {todayAppointments.length} citas programadas
+                    </p>
                   </div>
+                  <div className="flex space-x-3">
+                    <button 
+                      onClick={() => {
+                        setSelectedAppointment(null);
+                        appointmentFormModal.openModal();
+                      }}
+                      className="hidden md:inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      Nueva Cita
+                    </button>
+                    <Link href="/appointments">
+                      <button className="text-blue-600 hover:text-blue-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                        Ver todas
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Search - Only on mobile */}
+                <div className="mb-4 md:hidden">
+                  <input
+                    type="text"
+                    placeholder="Buscar citas..."
+                    value={appointmentSearch}
+                    onChange={(e) => setAppointmentSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Appointments List */}
+                {appointmentsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-20 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : paginatedAppointments.length > 0 ? (
+                  <div className="space-y-4">
+                    {paginatedAppointments.map((appointment) => (
+                      <AppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        onClick={() => handleAppointmentClick(appointment)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No hay citas para hoy"
+                    description="Cuando tengas citas programadas aparecerán aquí"
+                    icon={CalendarIcon}
+                  />
                 )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Top Customers */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Mejores Clientes</h2>
-              <Link href="/clientes">
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  Ver todos
-                </button>
-              </Link>
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Buscar clientes..."
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {paginatedCustomers.length === 0 ? (
-              <EmptyState
-                title="No hay clientes aún"
-                description="Comienza agregando tu primer cliente"
-              />
-            ) : (
-              <div className="space-y-3">
-                {paginatedCustomers.map((customer) => (
-                  <CustomerCard
-                    key={customer.id}
-                    customer={customer}
-                    onClick={() => handleCustomerClick(customer)}
-
-                  />
-                ))}
-                
-                {/* Pagination */}
-                {customerTotalPages > 1 && (
-                  <div className="flex justify-center items-center space-x-2 mt-4">
-                    <button
-                      onClick={prevCustomerPage}
-                      disabled={customerPage === 1}
-                      className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
-                    >
-                      Anterior
-                    </button>
-                    <span className="text-sm text-gray-600">
-                      Página {customerPage} de {customerTotalPages}
-                    </span>
-                    <button
-                      onClick={nextCustomerPage}
-                      disabled={customerPage === customerTotalPages}
-                      className="px-3 py-1 text-sm border rounded-md disabled:opacity-50"
-                    >
-                      Siguiente
-                    </button>
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Recent Customers */}
+            <div className="bg-white rounded-xl shadow-sm border">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Clientes Recientes</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Últimos clientes registrados
+                    </p>
                   </div>
+                  <Link href="/clientes">
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                      Ver todos
+                    </button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {/* Search - Only on mobile */}
+                <div className="mb-4 md:hidden">
+                  <input
+                    type="text"
+                    placeholder="Buscar clientes..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Customers List */}
+                {customersLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-16 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : paginatedCustomers.length > 0 ? (
+                  <div className="space-y-3">
+                    {paginatedCustomers.map((customer) => (
+                      <CustomerCard
+                        key={customer.id}
+                        customer={customer}
+                        onClick={() => handleCustomerClick(customer)}
+                        compact={true}
+                        showActions={false}
+                        showMetrics={false}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No hay clientes"
+                    description="Tus clientes aparecerán aquí"
+                    icon={UserIcon}
+                  />
                 )}
               </div>
-            )}
+            </div>
+
+            {/* Quick Links */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Accesos Rápidos</h2>
+              </div>
+              <div className="p-6 space-y-3">
+                <Link href="/appointments" className="block">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <CalendarIcon className="h-5 w-5 text-blue-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Gestionar Citas</span>
+                  </div>
+                </Link>
+                <Link href="/clientes" className="block">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <UserIcon className="h-5 w-5 text-green-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Gestionar Clientes</span>
+                  </div>
+                </Link>
+                <Link href="/ingresos" className="block">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <CreditCardIcon className="h-5 w-5 text-purple-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Ver Ingresos</span>
+                  </div>
+                </Link>
+                <Link href="/mi-pagina-web" className="block">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <CreditCardIcon className="h-5 w-5 text-orange-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Mi Página Web</span>
+                  </div>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Landing Page Section */}
+        {/* Landing Page CTA - Simplified */}
         {!loadingLanding && (
-          <div className="mt-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
+          <div className="mt-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-semibold mb-2">Tu Página Web Pública</h3>
-                <p className="text-purple-100">
+                <h3 className="text-lg font-semibold mb-1">Tu Página Web Pública</h3>
+                <p className="text-blue-100 text-sm">
                   {landingPageInfo.isPublished 
-                    ? "Tu página está publicada y lista para recibir clientes"
-                    : "Configura tu página web para que los clientes puedan agendar citas"}
+                    ? "Tu página está activa y recibiendo clientes"
+                    : "Configura tu página para recibir más clientes"}
                 </p>
               </div>
               <div className="flex space-x-3">
                 {landingPageInfo.isPublished && landingPageInfo.slug && (
                   <button
                     onClick={handleViewPublicPage}
-                    className="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors"
+                    className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors text-sm"
                   >
                     Ver Página
                   </button>
                 )}
                 <Link href="/mi-pagina-web">
-                  <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                    Configurar
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm border border-blue-400">
+                    {landingPageInfo.isPublished ? 'Editar' : 'Configurar'}
                   </button>
                 </Link>
               </div>
             </div>
           </div>
         )}
-      </ContentContainer>
+      </div>
 
       {/* Modals */}
-      
-      {/* Appointment Form Modal (Create/Edit) */}
       <BaseModal
         isOpen={appointmentFormModal.isOpen}
         onClose={appointmentFormModal.closeModal}
@@ -515,14 +556,12 @@ function AuthenticatedDashboard() {
         />
       </BaseModal>
 
-      {/* Appointment View Modal */}
       <AppointmentModal
         isOpen={appointmentModal.isOpen}
         onClose={appointmentModal.closeModal}
         appointment={selectedAppointment}
       />
       
-      {/* Customer Modal */}
       <CustomerModal
         isOpen={customerModal.isOpen}
         onClose={customerModal.closeModal}

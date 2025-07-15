@@ -21,12 +21,15 @@ import {
   ArrowLeft,
   ImageIcon,
   FileTextIcon,
+  Search,
+  MessageCircleQuestion,
+  BarChart3,
 } from "lucide-react";
 
 export default function MiPaginaWebPage() {
   const { user } = useAuthUser();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'info' | 'services' | 'calendar' | 'form' | 'design' | 'contact'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'services' | 'calendar' | 'form' | 'design' | 'contact' | 'seo' | 'faqs' | 'analytics'>('info');
 
   const {
     landingPageData,
@@ -621,6 +624,420 @@ export default function MiPaginaWebPage() {
     </div>
   );
 
+  const renderSEOSettings = () => (
+    <div className="space-y-6">
+      <div className="bg-blue-50 rounded-lg p-4 mb-6">
+        <h4 className="text-sm font-medium text-blue-900 mb-2">Optimización SEO</h4>
+        <p className="text-sm text-blue-700">
+          Mejora la visibilidad de tu página en buscadores como Google y Bing configurando estos campos SEO.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Título SEO (Meta Title) *
+          </label>
+          <input
+            type="text"
+            value={landingPageData.metaTitle || ''}
+            onChange={(e) => updateLandingPageData({ metaTitle: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Dr. Juan Pérez - Especialista en Dermatología"
+            maxLength={60}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Máximo 60 caracteres. Aparece en los resultados de búsqueda.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Palabra Clave Principal
+          </label>
+          <input
+            type="text"
+            value={landingPageData.focusKeyword || ''}
+            onChange={(e) => updateLandingPageData({ focusKeyword: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="dermatólogo Santiago"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Palabra clave principal por la que quieres aparecer.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Descripción SEO (Meta Description) *
+        </label>
+        <textarea
+          value={landingPageData.metaDescription || ''}
+          onChange={(e) => updateLandingPageData({ metaDescription: e.target.value })}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Agenda tu consulta dermatológica con el Dr. Juan Pérez. Especialista en tratamientos de piel con más de 10 años de experiencia."
+          maxLength={160}
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Máximo 160 caracteres. Descripción que aparece en los resultados de búsqueda.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Palabras Clave Secundarias
+        </label>
+        <input
+          type="text"
+          value={landingPageData.seoKeywords || ''}
+          onChange={(e) => updateLandingPageData({ seoKeywords: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="dermatología, tratamientos piel, consulta dermatológica, especialista piel"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Separadas por comas. Palabras relacionadas con tu especialidad.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tipo de Negocio
+          </label>
+          <select
+            value={landingPageData.businessType || ''}
+            onChange={(e) => updateLandingPageData({ businessType: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Seleccionar tipo</option>
+            <option value="MedicalOrganization">Organización Médica</option>
+            <option value="HealthAndBeautyBusiness">Salud y Belleza</option>
+            <option value="ProfessionalService">Servicio Profesional</option>
+            <option value="LocalBusiness">Negocio Local</option>
+            <option value="EducationalOrganization">Organización Educativa</option>
+            <option value="SportsActivityLocation">Actividad Deportiva</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Área de Servicio
+          </label>
+          <input
+            type="text"
+            value={landingPageData.serviceArea || ''}
+            onChange={(e) => updateLandingPageData({ serviceArea: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Santiago, Las Condes, Providencia"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Ciudades o áreas donde ofreces tus servicios.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFAQsSettings = () => {
+    const faqs = JSON.parse(landingPageData.faqs || '[]');
+    
+    const addFAQ = () => {
+      const newFAQ = {
+        id: Date.now().toString(),
+        question: '',
+        answer: '',
+        summary: '',
+        keywords: []
+      };
+      updateLandingPageData({ 
+        faqs: JSON.stringify([...faqs, newFAQ]) 
+      });
+    };
+
+    const updateFAQ = (index: number, updates: any) => {
+      const updatedFAQs = [...faqs];
+      updatedFAQs[index] = { ...updatedFAQs[index], ...updates };
+      updateLandingPageData({ 
+        faqs: JSON.stringify(updatedFAQs) 
+      });
+    };
+
+    const removeFAQ = (index: number) => {
+      const updatedFAQs = faqs.filter((_: any, i: number) => i !== index);
+      updateLandingPageData({ 
+        faqs: JSON.stringify(updatedFAQs) 
+      });
+    };
+
+    const suggestedQuestions = [
+      `¿Qué servicios ofrece ${landingPageData.professionalName || 'el profesional'}?`,
+      `¿Cuánto cuesta una consulta con ${landingPageData.professionalName || 'el profesional'}?`,
+      `¿Cómo puedo agendar una cita?`,
+      `¿Dónde está ubicada la consulta?`,
+      `¿Cuál es la experiencia del profesional?`,
+      `¿Qué incluye la consulta?`,
+      `¿Aceptan seguros médicos?`,
+      `¿Hay descuentos disponibles?`
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-green-50 rounded-lg p-4 mb-6">
+          <h4 className="text-sm font-medium text-green-900 mb-2">Optimización para IA (AEO)</h4>
+          <p className="text-sm text-green-700 mb-3">
+            Las preguntas frecuentes optimizadas ayudan a que tu página aparezca como respuesta en ChatGPT, Google AI y otros buscadores de IA.
+          </p>
+          <div className="text-xs text-green-600">
+            <strong>Consejos:</strong> 
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              <li>Responde preguntas que realmente hacen tus clientes</li>
+              <li>Las primeras 2 líneas deben ser la respuesta directa</li>
+              <li>Incluye palabras clave naturalmente</li>
+              <li>Cada respuesta debe funcionar independientemente</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">Preguntas Frecuentes</h3>
+          <button
+            onClick={addFAQ}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar FAQ
+          </button>
+        </div>
+
+        {faqs.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <MessageCircleQuestion className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">No hay preguntas frecuentes agregadas</p>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 font-medium">Preguntas sugeridas:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-4xl mx-auto">
+                {suggestedQuestions.slice(0, 6).map((question, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      const newFAQ = {
+                        id: Date.now().toString(),
+                        question,
+                        answer: '',
+                        summary: '',
+                        keywords: []
+                      };
+                      updateLandingPageData({ 
+                        faqs: JSON.stringify([newFAQ]) 
+                      });
+                    }}
+                    className="text-left p-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded border border-blue-200"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {faqs.map((faq: any, index: number) => (
+              <div key={faq.id || index} className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-md font-medium text-gray-900">FAQ {index + 1}</h4>
+                  <button
+                    onClick={() => removeFAQ(index)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pregunta *
+                    </label>
+                    <input
+                      type="text"
+                      value={faq.question}
+                      onChange={(e) => updateFAQ(index, { question: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="¿Cuánto cuesta una consulta?"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Escribe la pregunta tal como la haría un cliente.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Respuesta Completa *
+                    </label>
+                    <textarea
+                      value={faq.answer}
+                      onChange={(e) => updateFAQ(index, { answer: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="La consulta cuesta $50.000. Esto incluye evaluación completa, diagnóstico y plan de tratamiento. También ofrecemos planes de pago y descuentos para estudiantes..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      <strong>Importante:</strong> Las primeras 1-2 líneas deben ser la respuesta directa y clara.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Resumen (Para IA)
+                    </label>
+                    <input
+                      type="text"
+                      value={faq.summary}
+                      onChange={(e) => updateFAQ(index, { summary: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Consulta $50.000, incluye evaluación y plan de tratamiento"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Versión muy corta de la respuesta para cuando la IA cite tu página.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Palabras Clave
+                    </label>
+                    <input
+                      type="text"
+                      value={faq.keywords?.join(', ') || ''}
+                      onChange={(e) => updateFAQ(index, { 
+                        keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k)
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="precio consulta, costo dermatólogo, valor tratamiento"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Separadas por comas. Palabras que la gente buscaría para esta pregunta.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderAnalyticsSettings = () => (
+    <div className="space-y-6">
+      <div className="bg-purple-50 rounded-lg p-4 mb-6">
+        <h4 className="text-sm font-medium text-purple-900 mb-2">Analytics & Verificación</h4>
+        <p className="text-sm text-purple-700">
+          Conecta herramientas de análisis y verifica tu página en buscadores para mejorar tu SEO.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Google Analytics ID
+          </label>
+          <input
+            type="text"
+            value={landingPageData.googleAnalyticsId || ''}
+            onChange={(e) => updateLandingPageData({ googleAnalyticsId: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="G-XXXXXXXXXX"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            ID de Google Analytics para rastrear visitas.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            URL Canónica Personalizada
+          </label>
+          <input
+            type="url"
+            value={landingPageData.canonicalUrl || ''}
+            onChange={(e) => updateLandingPageData({ canonicalUrl: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://misitioweb.com/mi-pagina"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Solo si tienes un dominio personalizado.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Verificación Google Search Console
+          </label>
+          <input
+            type="text"
+            value={landingPageData.googleSiteVerification || ''}
+            onChange={(e) => updateLandingPageData({ googleSiteVerification: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="código de verificación"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Meta tag de verificación de Google Search Console.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Verificación Bing Webmaster Tools
+          </label>
+          <input
+            type="text"
+            value={landingPageData.bingSiteVerification || ''}
+            onChange={(e) => updateLandingPageData({ bingSiteVerification: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="código de verificación"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Meta tag de verificación de Bing Webmaster Tools.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Directivas para Robots
+        </label>
+        <select
+          value={landingPageData.robotsDirective || 'index,follow'}
+          onChange={(e) => updateLandingPageData({ robotsDirective: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="index,follow">index,follow (Recomendado)</option>
+          <option value="index,nofollow">index,nofollow</option>
+          <option value="noindex,follow">noindex,follow</option>
+          <option value="noindex,nofollow">noindex,nofollow</option>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Controla cómo los buscadores indexan tu página.
+        </p>
+      </div>
+
+      <div className="bg-yellow-50 rounded-lg p-4">
+        <h5 className="text-sm font-medium text-yellow-900 mb-2">Próximamente</h5>
+        <p className="text-sm text-yellow-700">
+          • Integración automática con Google Search Console<br/>
+          • Reportes de rendimiento SEO<br/>
+          • Análisis de palabras clave<br/>
+          • Monitoreo de menciones en IA
+        </p>
+      </div>
+    </div>
+  );
+
   const tabs = [
     { id: 'info', label: 'Información Básica', icon: Layout },
     { id: 'services', label: 'Servicios', icon: Briefcase },
@@ -628,6 +1045,9 @@ export default function MiPaginaWebPage() {
     { id: 'form', label: 'Formulario', icon: FileTextIcon },
     { id: 'design', label: 'Diseño', icon: Palette },
     { id: 'contact', label: 'Contacto', icon: Phone },
+    { id: 'seo', label: 'SEO', icon: Search },
+    { id: 'faqs', label: 'Preguntas Frecuentes', icon: MessageCircleQuestion },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   ];
 
   return (
@@ -742,6 +1162,9 @@ export default function MiPaginaWebPage() {
               {activeTab === 'form' && renderFormSettings()}
               {activeTab === 'design' && renderDesignSettings()}
               {activeTab === 'contact' && renderContactSettings()}
+              {activeTab === 'seo' && renderSEOSettings()}
+              {activeTab === 'faqs' && renderFAQsSettings()}
+              {activeTab === 'analytics' && renderAnalyticsSettings()}
             </div>
           </div>
         </div>

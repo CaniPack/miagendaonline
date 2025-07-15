@@ -118,8 +118,9 @@ export default function Navigation() {
         {/* Mobile Navigation - Only show when signed in */}
         <SignedIn>
           <div className="md:hidden border-t border-gray-200 pt-4 pb-3">
-            <div className="flex flex-wrap gap-2">
-              {navigationItems.map((item) => {
+            {/* First row with 4 main items */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {navigationItems.slice(0, 4).map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||
@@ -129,14 +130,39 @@ export default function Navigation() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl text-xs font-medium transition-all duration-200 ${
                       isActive
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        ? "bg-green-50 text-green-700 shadow-sm border border-green-200"
+                        : "text-gray-600 hover:text-green-600 hover:bg-green-50"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
+                    <Icon className={`h-6 w-6 mb-1 ${isActive ? 'text-green-600' : 'text-gray-500'}`} />
+                    <span className="text-center leading-tight">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            
+            {/* Second row with remaining 3 items centered */}
+            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+              {navigationItems.slice(4).map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl text-xs font-medium transition-all duration-200 ${
+                      isActive
+                        ? "bg-green-50 text-green-700 shadow-sm border border-green-200"
+                        : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                    }`}
+                  >
+                    <Icon className={`h-6 w-6 mb-1 ${isActive ? 'text-green-600' : 'text-gray-500'}`} />
+                    <span className="text-center leading-tight">{item.name}</span>
                   </Link>
                 );
               })}
