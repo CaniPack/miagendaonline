@@ -9,6 +9,7 @@ import {
   HomeIcon,
   TrendingUpIcon,
   GlobeIcon,
+  SettingsIcon,
 } from "lucide-react";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -21,6 +22,7 @@ const navigationItems = [
   { name: "Clientes", href: "/clientes", icon: UsersIcon },
   { name: "Ingresos", href: "/ingresos", icon: TrendingUpIcon },
   { name: "Mi web", href: "/mi-pagina-web", icon: GlobeIcon },
+  { name: "Configuración", href: "/configuracion", icon: SettingsIcon },
 ];
 
 export default function Navigation() {

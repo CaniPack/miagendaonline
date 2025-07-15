@@ -74,7 +74,7 @@ export default function BaseModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-gray-500 bg-opacity-10 backdrop-blur-sm transition-opacity"
         onClick={handleBackdropClick}
       />
       

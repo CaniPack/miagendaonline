@@ -23,6 +23,13 @@ model User {
   plan          Plan?          @relation(fields: [planId], references: [id])
   planId        String?
   landingPage   LandingPage?
+  
+  // Google Calendar Integration
+  googleAccessToken    String? // Token de acceso de Google
+  googleRefreshToken   String? // Token de refresh de Google
+  googleCalendarId     String? // ID del calendario principal
+  googleCalendarSync   Boolean @default(false) // Si tiene sincronización activa
+  
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -34,12 +41,18 @@ model Appointment {
   customer        Customer          @relation(fields: [customerId], references: [id])
   customerId      String
   date            DateTime
-  duration        Int // en minutos
+  duration        Int               @default(60) // en minutos
   status          AppointmentStatus @default(PENDING)
-  notes           String? // Notas públicas/del cliente
+  notes           String?
   internalComment String? // Comentario interno del profesional
   internalPrice   Int? // Precio interno en CLP
   publicPrice     Int? // Precio público/cobrado
+  
+  // Google Calendar Integration
+  googleEventId   String? // ID del evento en Google Calendar
+  googleEventLink String? // Link directo al evento en Google Calendar
+  syncedToGoogle  Boolean @default(false) // Si está sincronizado con Google Calendar
+  
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 }

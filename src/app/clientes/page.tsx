@@ -517,8 +517,16 @@ export default function ClientesPage() {
 
       {/* New Customer Modal */}
       <div className={`${newCustomerModal.isOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+        {/* Overlay clickeable con efecto blur sutil */}
+        <div 
+          className="fixed inset-0 bg-gray-500 bg-opacity-10 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={newCustomerModal.closeModal}
+        >
+          {/* Modal content - detener propagación del click */}
+          <div 
+            className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-semibold mb-4">Nuevo Cliente</h3>
             <CustomerForm
               onSubmit={handleCreateCustomer}
