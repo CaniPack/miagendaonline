@@ -24,12 +24,13 @@ import {
   Search,
   MessageCircleQuestion,
   BarChart3,
+  Video,
 } from "lucide-react";
 
 export default function MiPaginaWebPage() {
   const { user } = useAuthUser();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'info' | 'services' | 'calendar' | 'form' | 'design' | 'contact' | 'seo' | 'faqs' | 'analytics'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'services' | 'calendar' | 'form' | 'design' | 'contact' | 'seo' | 'faqs' | 'analytics' | 'video'>('info');
 
   const {
     landingPageData,
@@ -1038,6 +1039,189 @@ export default function MiPaginaWebPage() {
     </div>
   );
 
+  const renderVideoSettings = () => {
+    // Función para validar URLs de YouTube y Vimeo
+    const validateVideoUrl = (url: string): { isValid: boolean; type: 'youtube' | 'vimeo' | null; embedUrl: string | null } => {
+      if (!url) return { isValid: false, type: null, embedUrl: null };
+      
+      // YouTube validation
+      const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+      const youtubeMatch = url.match(youtubeRegex);
+      if (youtubeMatch) {
+        const videoId = youtubeMatch[1];
+        return {
+          isValid: true,
+          type: 'youtube',
+          embedUrl: `https://www.youtube.com/embed/${videoId}`
+        };
+      }
+      
+      // Vimeo validation
+      const vimeoRegex = /^(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/)([0-9]+)/;
+      const vimeoMatch = url.match(vimeoRegex);
+      if (vimeoMatch) {
+        const videoId = vimeoMatch[1];
+        return {
+          isValid: true,
+          type: 'vimeo',
+          embedUrl: `https://player.vimeo.com/video/${videoId}`
+        };
+      }
+      
+      return { isValid: false, type: null, embedUrl: null };
+    };
+
+    const videoValidation = validateVideoUrl(landingPageData.videoUrl || '');
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 rounded-lg p-4 mb-6">
+          <h4 className="text-sm font-medium text-red-900 mb-2">🎥 Configuración de Video</h4>
+          <p className="text-sm text-red-700">
+            Agrega un video de YouTube o Vimeo para mostrar tus servicios, testimonios o presentación profesional.
+          </p>
+        </div>
+
+        {/* Mostrar/Ocultar Video */}
+        <div className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            id="showVideo"
+            checked={landingPageData.showVideo || false}
+            onChange={(e) => updateLandingPageData({ showVideo: e.target.checked })}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="showVideo" className="text-sm font-medium text-gray-700">
+            Mostrar video en mi página web
+          </label>
+        </div>
+
+        {landingPageData.showVideo && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL del Video *
+              </label>
+              <input
+                type="url"
+                value={landingPageData.videoUrl || ''}
+                onChange={(e) => updateLandingPageData({ videoUrl: e.target.value })}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  landingPageData.videoUrl && !videoValidation.isValid 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/..."
+              />
+              {landingPageData.videoUrl && (
+                <div className="mt-2">
+                  {videoValidation.isValid ? (
+                    <p className="text-sm text-green-600 flex items-center">
+                      ✓ URL válida de {videoValidation.type === 'youtube' ? 'YouTube' : 'Vimeo'}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600">
+                      ❌ URL no válida. Solo se permiten URLs de YouTube y Vimeo
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="mt-2 text-xs text-gray-500">
+                <p><strong>Ejemplos válidos:</strong></p>
+                <p>• https://www.youtube.com/watch?v=dQw4w9WgXcQ</p>
+                <p>• https://youtu.be/dQw4w9WgXcQ</p>
+                <p>• https://vimeo.com/123456789</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Título del Video
+                </label>
+                <input
+                  type="text"
+                  value={landingPageData.videoTitle || ''}
+                  onChange={(e) => updateLandingPageData({ videoTitle: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Conoce nuestros servicios"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Posición del Video
+                </label>
+                <select
+                  value={landingPageData.videoPosition || 'header'}
+                  onChange={(e) => updateLandingPageData({ videoPosition: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="header">En el encabezado</option>
+                  <option value="services">Después de los servicios</option>
+                  <option value="footer">Al final de la página</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción del Video
+              </label>
+              <textarea
+                value={landingPageData.videoDescription || ''}
+                onChange={(e) => updateLandingPageData({ videoDescription: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Breve descripción de lo que los visitantes verán en el video..."
+              />
+            </div>
+
+            {/* Vista previa del video */}
+            {landingPageData.videoUrl && videoValidation.isValid && videoValidation.embedUrl && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vista Previa
+                </label>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="aspect-video max-w-md mx-auto">
+                    <iframe
+                      src={videoValidation.embedUrl}
+                      className="w-full h-full rounded-lg"
+                      allowFullScreen
+                      title="Vista previa del video"
+                    />
+                  </div>
+                  {landingPageData.videoTitle && (
+                    <h3 className="text-lg font-semibold text-center mt-3">
+                      {landingPageData.videoTitle}
+                    </h3>
+                  )}
+                  {landingPageData.videoDescription && (
+                    <p className="text-gray-600 text-center mt-2">
+                      {landingPageData.videoDescription}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="bg-blue-50 rounded-lg p-4">
+          <h5 className="text-sm font-medium text-blue-900 mb-2">💡 Consejos para videos efectivos</h5>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• Mantén el video entre 30 segundos y 2 minutos</li>
+            <li>• Muestra tu rostro y personalidad para generar confianza</li>
+            <li>• Explica claramente qué servicios ofreces</li>
+            <li>• Incluye testimonios de clientes satisfechos</li>
+            <li>• Asegúrate de que el audio sea claro</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
   const tabs = [
     { id: 'info', label: 'Información Básica', icon: Layout },
     { id: 'services', label: 'Servicios', icon: Briefcase },
@@ -1048,6 +1232,7 @@ export default function MiPaginaWebPage() {
     { id: 'seo', label: 'SEO', icon: Search },
     { id: 'faqs', label: 'Preguntas Frecuentes', icon: MessageCircleQuestion },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'video', label: 'Video', icon: Video },
   ];
 
   return (
@@ -1165,6 +1350,7 @@ export default function MiPaginaWebPage() {
               {activeTab === 'seo' && renderSEOSettings()}
               {activeTab === 'faqs' && renderFAQsSettings()}
               {activeTab === 'analytics' && renderAnalyticsSettings()}
+              {activeTab === 'video' && renderVideoSettings()}
             </div>
           </div>
         </div>

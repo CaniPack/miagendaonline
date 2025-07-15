@@ -62,6 +62,12 @@ interface LandingPageData {
   contactEmail?: string;
   colorScheme: string;
   slug: string;
+  // Video fields
+  videoUrl?: string;
+  videoTitle?: string;
+  videoDescription?: string;
+  videoPosition?: string;
+  showVideo?: boolean;
   user: {
     name: string;
     email: string;
@@ -297,6 +303,68 @@ export default function LandingPageClient({ landingPage }: Props) {
   const colors = colorSchemes[landingPage.colorScheme as keyof typeof colorSchemes];
   const formFields = JSON.parse(landingPage.formFields) as FormField[];
 
+  // Función para procesar URLs de video y obtener embed URL
+  const getVideoEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    
+    // YouTube validation
+    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const youtubeMatch = url.match(youtubeRegex);
+    if (youtubeMatch) {
+      const videoId = youtubeMatch[1];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // Vimeo validation
+    const vimeoRegex = /^(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/)([0-9]+)/;
+    const vimeoMatch = url.match(vimeoRegex);
+    if (vimeoMatch) {
+      const videoId = vimeoMatch[1];
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+    
+    return null;
+  };
+
+  // Componente de video
+  const VideoSection = ({ position }: { position: string }) => {
+    if (!landingPage.showVideo || !landingPage.videoUrl || landingPage.videoPosition !== position) {
+      return null;
+    }
+
+    const embedUrl = getVideoEmbedUrl(landingPage.videoUrl);
+    if (!embedUrl) return null;
+
+    return (
+      <div className="py-16 px-4 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          {landingPage.videoTitle && (
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              {landingPage.videoTitle}
+            </h2>
+          )}
+          {landingPage.videoDescription && (
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+              {landingPage.videoDescription}
+            </p>
+          )}
+          
+          <div className="relative max-w-3xl mx-auto">
+            <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
+              <iframe
+                src={embedUrl}
+                className="w-full h-full"
+                allowFullScreen
+                title={landingPage.videoTitle || "Video"}
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (submitted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -384,6 +452,9 @@ export default function LandingPageClient({ landingPage }: Props) {
         </div>
       </div>
 
+      {/* Video Section - Header Position */}
+      <VideoSection position="header" />
+
       {/* Descripción de Servicios */}
       <div className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
@@ -453,6 +524,9 @@ export default function LandingPageClient({ landingPage }: Props) {
           </div>
         ) : null;
       })()}
+
+      {/* Video Section - Services Position */}
+      <VideoSection position="services" />
 
       {/* Contacto */}
       {(landingPage.whatsapp ||
@@ -884,6 +958,9 @@ export default function LandingPageClient({ landingPage }: Props) {
           </div>
         </div>
       )}
+
+      {/* Video Section - Footer Position */}
+      <VideoSection position="footer" />
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 px-4">

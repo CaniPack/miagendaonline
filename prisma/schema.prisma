@@ -192,6 +192,13 @@ model LandingPage {
   bingSiteVerification   String? // Meta tag de verificación de Bing
   googleAnalyticsId      String? // ID de Google Analytics
   
+  // Video Content
+  videoUrl         String? // URL del video de YouTube o Vimeo
+  videoTitle       String? // Título del video
+  videoDescription String? // Descripción del video
+  videoPosition    String @default("header") // "header", "services", "footer"
+  showVideo        Boolean @default(false) // Si mostrar el video
+  
   // Estado
   isPublished Boolean @default(false)
 

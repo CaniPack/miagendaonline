@@ -61,6 +61,13 @@ export interface LandingPageData {
   bingSiteVerification?: string;
   googleAnalyticsId?: string;
   customSchema?: string;
+  
+  // Video Fields
+  videoUrl?: string;
+  videoTitle?: string;
+  videoDescription?: string;
+  videoPosition?: string;
+  showVideo?: boolean;
 }
 
 export interface ColorScheme {
