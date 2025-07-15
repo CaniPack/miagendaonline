@@ -10,6 +10,7 @@ import {
   Clock,
   DollarSign,
   Users,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -23,8 +24,12 @@ import type { CustomerCardProps } from "@/types";
 const CustomerCard = React.memo<CustomerCardProps>(({
   customer,
   onClick,
+  onEdit,
+  onDelete,
+  onWhatsApp,
   showMetrics = true,
   compact = false,
+  showActions = false,
 }) => {
   const customerStatus = React.useMemo(() => getCustomerStatus(customer), [customer]);
   
@@ -128,8 +133,37 @@ const CustomerCard = React.memo<CustomerCardProps>(({
           )}
         </div>
       )}
+
+      {/* Action Buttons */}
+      {showActions && !compact && (
+        <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+          {customer.phone && onWhatsApp && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onWhatsApp(customer);
+              }}
+              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(customer);
+              }}
+              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              Editar
+            </button>
+          )}
+        </div>
+      )}
     </>
-  ), [customer, compact, showMetrics, customerStatus]);
+  ), [customer, compact, showMetrics, customerStatus, showActions, onEdit, onWhatsApp]);
 
   const baseClasses = React.useMemo(() => cn(
     "bg-white border border-gray-200 rounded-lg transition-all duration-200",

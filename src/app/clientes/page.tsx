@@ -26,6 +26,7 @@ import {
 } from "@/hooks";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/components/ToastProvider";
+import WhatsAppNotifications from "@/components/WhatsAppNotifications";
 
 const CUSTOMERS_PER_PAGE = 12;
 
@@ -60,6 +61,12 @@ export default function ClientesPage() {
   const customerModal = useModal();
   const confirmModal = useModal();
   const newCustomerModal = useModal();
+  
+  // WhatsApp modal state
+  const [whatsappModal, setWhatsappModal] = useState({
+    isOpen: false,
+    customer: null as any,
+  });
 
   // Get filtered customers based on current filters
   const getFilteredCustomers = () => {
@@ -194,6 +201,25 @@ export default function ClientesPage() {
       message: `¿Estás seguro de que deseas eliminar a ${customer.name}? Esta acción no se puede deshacer.`,
       onConfirm: () => handleDeleteCustomer(customer.id),
     });
+  };
+
+  const handleWhatsApp = (customer: any) => {
+    setWhatsappModal({
+      isOpen: true,
+      customer: customer,
+    });
+  };
+
+  const handleWhatsAppClose = () => {
+    setWhatsappModal({
+      isOpen: false,
+      customer: null,
+    });
+  };
+
+  const handleWhatsAppSuccess = () => {
+    showToast('Mensaje de WhatsApp enviado exitosamente!', 'success');
+    handleWhatsAppClose();
   };
 
   const handleSort = (field: typeof sortField) => {
@@ -417,6 +443,7 @@ export default function ClientesPage() {
                     onClick={() => handleEditCustomer(customer)}
                     onEdit={() => handleEditCustomer(customer)}
                     onDelete={() => handleDeleteClick(customer)}
+                    onWhatsApp={() => handleWhatsApp(customer)}
                     showActions
                     showStats
                     showContactInfo
@@ -535,6 +562,14 @@ export default function ClientesPage() {
           </div>
         </div>
       </div>
+
+      {/* WhatsApp Modal */}
+      <WhatsAppNotifications
+        customer={whatsappModal.customer}
+        isOpen={whatsappModal.isOpen}
+        onClose={handleWhatsAppClose}
+        onSuccess={handleWhatsAppSuccess}
+      />
     </div>
   );
 }

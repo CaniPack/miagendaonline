@@ -243,8 +243,14 @@ export interface AppointmentCardProps {
 export interface CustomerCardProps {
   customer: Customer;
   onClick?: (customer: Customer) => void;
+  onEdit?: (customer: Customer) => void;
+  onDelete?: (customer: Customer) => void;
+  onWhatsApp?: (customer: Customer) => void;
   showMetrics?: boolean;
   compact?: boolean;
+  showActions?: boolean;
+  showContactInfo?: boolean;
+  showStats?: boolean;
 }
 
 export interface LoadingSpinnerProps {
